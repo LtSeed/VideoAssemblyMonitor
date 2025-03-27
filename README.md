@@ -25,13 +25,7 @@ The **Video Assembly Monitor** project is designed to help monitor and track ass
 - **Progress Tracking**: Visual progress tracking for assembly tasks, showing a step-by-step guide and the current state (e.g., in progress, completed).
 - **Interactive Interface**: The frontend offers a user-friendly interface to visualize assembly progress, monitor the status of various parts, and interact with the system for efficient management.
 
-### Frontend Technology Stack
-The frontend for **Video Assembly Monitor** is built using modern web technologies and frameworks to ensure responsiveness and ease of use:
-
-- **Vite**: A fast and optimized build tool for frontend development, used to quickly bundle and serve the project.
-- **React**: The primary library for building the user interface, leveraging its component-based architecture for better maintainability.
-- **TypeScript**: Ensures type safety, improves developer productivity, and reduces the potential for runtime errors.
-- **Ant Design**: A comprehensive UI library that provides high-quality components for creating visually appealing and consistent interfaces.
+### Frontend
 
 The frontend is available in a separate repository, which can be found [here](https://github.com/LtSeed/VideoAssemblyMonitorWeb). This repository contains the entire codebase for the web frontend, including pages for monitoring assembly progress, viewing real-time video feeds, and interacting with the backend.
 
