@@ -182,9 +182,9 @@ This project would not have been possible without the support and contributions 
   - **Vite**: For providing a fast and optimized build tool that supports the frontend of the project.
   - **React**: For offering a component-based architecture that makes building the frontend intuitive and maintainable.
   - **Ant Design**: For supplying high-quality UI components that contributed to the smooth user interface design.
-- **MySQL**: For providing the database support to manage and store assembly process data.
-- **Gradle**: For automating the build and dependency management of the project.
-- **JUnit**: For helping ensure the backend code is thoroughly tested and reliable.
+  - **MySQL**: For providing the database support to manage and store assembly process data.
+  - **Gradle**: For automating the build and dependency management of the project.
+  - **JUnit**: For helping ensure the backend code is thoroughly tested and reliable.
 - **Everyone who provided feedback**: Your insights helped improve the quality and direction of this project.
 
 This project is part of my **FYP (Final Year Project)** at NUSRI@Suzhou and Chongqing University, and other acknowledgments will be listed in my **CA2 Report**.
