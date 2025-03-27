@@ -79,39 +79,31 @@ Before setting up the project, ensure you have the following installed on your s
 
 1. **IntelliJ IDEA**: You can download and install IDEA from [here](https://www.jetbrains.com/idea/download/).
 2. **JDK 17**: This project requires JDK 17. You can download it from [AdoptOpenJDK](https://adoptopenjdk.net/) or [Oracle](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html).
-3. **Gradle**: While IntelliJ IDEA can automatically manage Gradle, if you prefer to install Gradle separately, download it from [here](https://gradle.org/install/).
+3. **Gradle**: While IntelliJ IDEA can automatically manage Gradle, if you prefer to install Gradle separately, download it from [here](https://gradle.org/install/). (I prefer to let IntelliJ IDEA automatically manage Gradle.)
 
 ### 1. Clone the Repository
 
-Start by cloning the project repository from GitHub:
-
-```bash
-git clone https://github.com/LtSeed/VideoAssemblyMonitor.git
-```
-
-Navigate into the project folder:
-
-```bash
-cd VideoAssemblyMonitor
-```
+Start by cloning the project repository from GitHub. Download the whole project, and unzip it to a place you like.
 
 ### 2. Open the Project in IntelliJ IDEA
 
 1. Open IntelliJ IDEA.
 2. On the welcome screen, select **Open**.
-3. Navigate to the folder where you cloned the repository, and select the project directory (`VideoAssemblyMonitor`).
+3. Navigate to the folder where you unzip the project.
 4. IDEA will automatically detect that this is a Gradle project and will prompt you to import Gradle. Click **Import Gradle Project** or **Enable Auto-Import** to proceed.
+5. If you miss the hint of import Gradle project, you can just close the IDE and open the project again. Then import hint will show again.
+6. Be patient when importing. When import done, the icons on the IDE of most of java files will not be an orange tea cup (while they are all orange tea cups when importing). 
 
 ### 3. Sync Gradle
 
 After opening the project, IntelliJ IDEA will attempt to automatically sync Gradle. If it doesn’t, manually sync the project by following these steps:
 
-1. In the **Gradle** tool window (usually on the right side of IDEA), click the **Refresh** button (the circular arrow icon) to sync the project with Gradle.
-2. Wait for the sync process to complete.
+1. In the **Gradle** tool window (usually on the right side of IDEA, looks like an elephant), click the **Refresh** button (the circular arrow icon) to sync the project with Gradle.
+2. Patiently wait for the sync process to complete.
 
 ### 4. Configure Java 17
 
-Make sure the project is using Java 17 as the runtime. In IntelliJ IDEA, follow these steps:
+Make sure the project is using Java 17 as the runtime (Because there may be many versions of java on your PC, while you don't know). In IntelliJ IDEA, follow these steps:
 
 1. Go to **File > Project Structure > Project**.
 2. In the **Project SDK** dropdown, select **JDK 17**.
