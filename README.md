@@ -125,7 +125,7 @@ To build the project and generate Javadoc, open the **Gradle** tool window, expa
 
 This will compile the project and ensure all dependencies are correctly set up.
 
-### 6. Config the database
+### 6. Configure the database
 
 Connect your database with your IDE. And create a new dataset.
 
@@ -145,9 +145,10 @@ spring.datasource.password=root
 
 Replace them with your dataset url, username and password.
 
-### 7. Config OpenCV DLL
+### 7. Configure OpenCV
 
 Download and put the path below in `PATH` system var.
+
 ```
 1.{your extracted path of openCV}\opencv\build\x64\vc14\bin
 2.{your extracted path of openCV}\opencv\build\x64\vc15\bin
