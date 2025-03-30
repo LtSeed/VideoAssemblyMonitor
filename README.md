@@ -153,7 +153,7 @@ Download and put the path below in `PATH` system var.
 1.{your extracted path of openCV}\opencv\build\x64\vc14\bin
 2.{your extracted path of openCV}\opencv\build\x64\vc15\bin
 3.{your extracted path of openCV}\opencv\build\java\x64  
-4.{your extracted path of openCV}\opencv\build\java\x64  
+4.{your extracted path of openCV}\opencv\build\java\x86
 ```
 
 Please select the third and fourth items according to your system.
