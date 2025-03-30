@@ -14,6 +14,14 @@ For the backend API, a detailed REST API documentation is available. This includ
 
 - [REST API Documentation on Postman](https://www.postman.com/satellite-astronaut-90149468/my-workspace/collection/l4oh81m/api-documentation?action=share&creator=42644368)
 
+## A Simple Roboflow SDK 
+
+A Simple Roboflow SDK for Java is included in the `src/main/java/nusri/fyp/demo/roboflow` path as a component of Spring Boot App.
+
+If you are finding a Roboflow SDK for Java, you can just copy the code, add the OKHttp dependence and use.
+
+If you don't want to use it in Spring Boot environment, you can easily config `RequestSenderOfOKHttp` and `RoboflowConfig` by giving them a new ObjectMapper, and Roboflow api host & port & apikey.
+
 ## Project Overview
 
 The **Video Assembly Monitor** project is designed to help monitor and track assembly processes using advanced computer vision techniques like **hand tracking** and **object detection**. This system provides real-time feedback for assembly verification and improvement by analyzing video feeds from assembly lines or workshops. The system consists of a **backend** built with **Spring Boot** and a **frontend** built with **Vite**, **React**, **TypeScript**, and **Ant Design**.
