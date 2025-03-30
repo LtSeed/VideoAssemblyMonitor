@@ -69,7 +69,7 @@ The backend of the **Video Assembly Monitor** project is built using **Spring Bo
   - `testImplementation 'org.springframework.boot:spring-boot-starter-test'`: Essential for writing unit tests and integration tests with Spring Boot.
   - `testRuntimeOnly 'org.junit.platform:junit-platform-launcher'`: Provides runtime support for JUnit tests.
 
-## Setup
+## Build From Source
 
 To set up and run the **Video Assembly Monitor** project, we recommend using IntelliJ IDEA for a smooth and easy experience. Below are the detailed steps to get the project up and running using Gradle and Spring Boot with Java 17.
 
@@ -79,7 +79,9 @@ Before setting up the project, ensure you have the following installed on your s
 
 1. **IntelliJ IDEA**: You can download and install IDEA from [here](https://www.jetbrains.com/idea/download/).
 2. **JDK 17**: This project requires JDK 17. You can download it from [AdoptOpenJDK](https://adoptopenjdk.net/) or [Oracle](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html).
-3. **Gradle**: While IntelliJ IDEA can automatically manage Gradle, if you prefer to install Gradle separately, download it from [here](https://gradle.org/install/). (I prefer to let IntelliJ IDEA automatically manage Gradle.)
+3. **MySQL**: Project need MySQL installed. You can download it from [here](https://dev.mysql.com/downloads/workbench/) or [here](https://dev.mysql.com/downloads/windows/installer/8.0.html).
+4. **OpenCV**: OpenCV460 is needed. The config guide will be in the 7th part of this section.
+5. **Gradle**: While IntelliJ IDEA can automatically manage Gradle, if you prefer to install Gradle separately, download it from [here](https://gradle.org/install/). (I prefer to let IntelliJ IDEA automatically manage Gradle.)
 
 ### 1. Clone the Repository
 
@@ -115,7 +117,44 @@ To build the project and generate Javadoc, open the **Gradle** tool window, expa
 
 This will compile the project and ensure all dependencies are correctly set up.
 
-### 6. Run the Spring Boot Application
+### 6. Config the database
+
+Connect your database with your IDE. And create a new dataset.
+
+``You can find a guide everywhere but not here.``
+
+Run the script at `src/main/java/nusri/fyp/demo/entity/update-schema.sql` in your database shell, it will auto create tables in the form the app needed.
+
+Open `src/main/resources/application.properties`
+
+Find the lines below:
+
+```
+spring.datasource.url=jdbc:mysql://localhost:3306/{datasetName}
+spring.datasource.username=root
+spring.datasource.password=root
+```
+
+Replace them with your dataset url, username and password.
+
+### 7. Config OpenCV DLL
+
+Download and put the path below in `PATH` system var.
+```
+1.{your extracted path of openCV}\opencv\build\x64\vc14\bin
+2.{your extracted path of openCV}\opencv\build\x64\vc15\bin
+3.{your extracted path of openCV}\opencv\build\java\x64  
+4.{your extracted path of openCV}\opencv\build\java\x64  
+```
+
+Please select the third and fourth items according to your system.
+
+The link below is for Windows. 
+
+Download openCV 4.6.0 [here](https://sourceforge.net/projects/opencvlibrary/files/4.6.0/opencv-4.6.0-vc14_vc15.exe/download).
+
+
+### 8. Run the Spring Boot Application
 
 Once the project is built, you can run the Spring Boot application. The main entry point for the application is `nusri.fyp.demo.DemoApplication`. To run the application with Java 17, follow these steps:
 
@@ -138,9 +177,6 @@ If you encounter any issues during setup, consider the following:
 - If the project fails to build, try running `./gradlew clean build` from the terminal in IDEA to clean up any previous build artifacts.
 - Ensure that the correct `-cp` classpath is set when running the application from the terminal (especially if you're using the JAR file).
 
----
-
-By following these steps, you should be able to easily open, build, and run the **Video Assembly Monitor** project in IntelliJ IDEA using Java 17 and Gradle. 
 
 ## Contributing
 
@@ -154,6 +190,11 @@ If you'd like to contribute to this project, feel free to fork the repository an
 4. Commit your changes (`git commit -am 'Add new feature'`)
 5. Push to the branch (`git push origin feature-name`)
 6. Create a new pull request
+
+### For those who continues to do this project in next year in NUSRI:
+
+You can contact me to add you as `Collaborators` of this repo.
+
 
 ## License
 
