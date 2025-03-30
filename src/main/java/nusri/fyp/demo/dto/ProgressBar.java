@@ -31,6 +31,7 @@ public class ProgressBar {
 
     private double p;
 
+
     /**
      * Constructs a ProgressBar from a {@link Node}, using the provided configuration service and preset name.
      *

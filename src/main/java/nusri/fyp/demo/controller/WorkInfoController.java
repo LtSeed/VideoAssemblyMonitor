@@ -12,7 +12,7 @@ import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
 import nusri.fyp.demo.service.ConfigService;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
 import nusri.fyp.demo.service.StateMachineService;
-import nusri.fyp.demo.service.img_sender.eoid.ImageSenderServiceImplOfEoid;
+import nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfPython;
 import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderServiceImplOfRoboflow;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import org.springframework.http.HttpStatus;
@@ -36,7 +36,7 @@ public class WorkInfoController {
     private final PresetRepository presetRepository;
     private final ConfigService configService;
     private final StateMachineService stateMachineService;
-    private final ImageSenderServiceImplOfEoid imageSenderServiceImplOfEoid;
+    private final ImageSenderServiceImplOfPython imageSenderServiceImplOfPython;
     private final ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow;
     private final ActionRepository actionRepository;
     private final ObjectRepository objectRepository;
@@ -112,7 +112,7 @@ public class WorkInfoController {
     public ResponseEntity<?> getAlarms(@RequestParam String user, @RequestParam String preset) {
         stateMachineService.stopStateMachine(user);
         String s = configService.getUseModel(preset);
-        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
         imageSenderService.interrupt(user);
         List<Preset> byId = presetRepository.findPresetByName(preset);
         if (!byId.isEmpty()) {
@@ -133,7 +133,7 @@ public class WorkInfoController {
     public void interruptStateMachine(@RequestParam String user) {
         String s = configService.getUseModel(stateMachineService.getStateMachineByName(user).getPreset().getName());
         stateMachineService.stopAndLogStateMachine(user);
-        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
         imageSenderService.interrupt(user);
     }
 
@@ -166,7 +166,7 @@ public class WorkInfoController {
      * @param stateMachineService The state machine service.
      * @param presetRepository The preset repository.
      * @param configService The configuration service.
-     * @param imageSenderServiceImplOfEoid The EOID implementation of the image sender service.
+     * @param imageSenderServiceImplOfPython The EOID implementation of the image sender service.
      * @param imageSenderServiceImplOfRoboflow The Roboflow implementation of the image sender service.
      * @param actionRepository The action repository.
      * @param objectRepository The object repository.
@@ -174,14 +174,14 @@ public class WorkInfoController {
     WorkInfoController(StateMachineService stateMachineService,
                        PresetRepository presetRepository,
                        ConfigService configService,
-                       ImageSenderServiceImplOfEoid imageSenderServiceImplOfEoid,
+                       ImageSenderServiceImplOfPython imageSenderServiceImplOfPython,
                        ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow,
                        ActionRepository actionRepository,
                        ObjectRepository objectRepository) {
         this.stateMachineService = stateMachineService;
         this.presetRepository = presetRepository;
         this.configService = configService;
-        this.imageSenderServiceImplOfEoid = imageSenderServiceImplOfEoid;
+        this.imageSenderServiceImplOfPython = imageSenderServiceImplOfPython;
         this.imageSenderServiceImplOfRoboflow = imageSenderServiceImplOfRoboflow;
         this.actionRepository = actionRepository;
         this.objectRepository = objectRepository;

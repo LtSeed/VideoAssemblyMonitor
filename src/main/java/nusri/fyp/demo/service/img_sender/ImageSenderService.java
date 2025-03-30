@@ -9,11 +9,8 @@ import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +70,7 @@ public abstract class ImageSenderService {
      * @return A list of action observations corresponding to this frame.
      * @throws IOException If an I/O problem occurs during sending.
      */
-    public abstract List<? extends AbstractActionObservation> sendFrame(Mat frame) throws IOException;
+    public abstract List<? extends AbstractActionObservation> sendFrame(Mat frame, Map<String, String> config) throws IOException;
 
     /**
      * Synchronously sends an image frame (Base64 string).
@@ -81,7 +78,7 @@ public abstract class ImageSenderService {
      * @param frame The Base64 encoded image string.
      * @return A list of action observations corresponding to this frame.
      */
-    public abstract List<? extends AbstractActionObservation> sendFrame(String frame);
+    public abstract List<? extends AbstractActionObservation> sendFrame(String frame, Map<String, String> config);
 
     /**
      * Asynchronously sends an image frame for recognition.
@@ -90,7 +87,7 @@ public abstract class ImageSenderService {
      * @param user  The user identifier, used to distinguish different sessions or processing workflows.
      * @return A {@link CompletableFuture} containing the list of recognition results.
      */
-    public abstract CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user);
+    public abstract CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user, Map<String, String> config);
 
     /**
      * Interrupts the ongoing recognition process for the current user, including canceling asynchronous tasks.
@@ -98,6 +95,7 @@ public abstract class ImageSenderService {
      * @param user The user identifier.
      */
     public abstract void interrupt(String user);
+
 
     /**
      * Reads the entire video file (frame by frame) and sends it to the model service. Frames can be skipped based on the frame interval from {@code configService}.
@@ -107,7 +105,7 @@ public abstract class ImageSenderService {
      * @return A map where keys are frame timestamps (in milliseconds), and values are the corresponding recognition results for each frame.
      * @throws IOException If reading the file or decoding the video fails.
      */
-    public Map<Long, List<? extends AbstractActionObservation>> sendVideoFile(File file, String user) throws IOException {
+    public Map<Long, List<? extends AbstractActionObservation>> sendVideoFile(File file, String user, Map<String, String> config) throws IOException {
         File dir = new File(configService.getVideoPath());
         if (!dir.exists()) {
             //noinspection ResultOfMethodCallIgnored
@@ -149,7 +147,7 @@ public abstract class ImageSenderService {
             Mat m = new Mat();
             frame.copyTo(m);
 
-            CompletableFuture<List<AbstractActionObservation>> listCompletableFuture = sendFrameAsync(m, user);
+            CompletableFuture<List<AbstractActionObservation>> listCompletableFuture = sendFrameAsync(m, user, config);
 
             long finalFrameIndex = frameIndex;
             CompletableFuture<Void> future;
@@ -173,49 +171,14 @@ public abstract class ImageSenderService {
     }
 
     /**
-     * Processes and sends the binary data of a specified video (frame by frame) to the model service.
-     *
-     * @param videoData A byte array containing the full video content.
-     * @return A map where the keys are lists of action observations, and the values are frame timestamps.
-     * @throws IOException If video decoding or sending fails.
-     */
-    public Map<List<? extends AbstractActionObservation>, Long> processVideoFrames(byte[] videoData) throws IOException {
-        File tempFile = File.createTempFile("video_", ".mp4");
-        try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(tempFile))) {
-            stream.write(videoData);
-        }
-
-        VideoCapture videoCapture = new VideoCapture(tempFile.getAbsolutePath());
-
-        if (!videoCapture.isOpened()) {
-            throw new IOException("Error opening video stream");
-        }
-
-        Mat frame = new Mat();
-        Map<List<? extends AbstractActionObservation>, Long> observations = new HashMap<>();
-
-        while (videoCapture.read(frame)) {
-            if (frame.empty()) {
-                break; // End of video
-            }
-            observations.put(sendFrame(frame), System.currentTimeMillis());  // Send each frame for processing
-        }
-
-        videoCapture.release(); // Release the VideoCapture resource
-        Files.delete(tempFile.toPath());
-
-        return observations;
-    }
-
-    /**
      * Processes a single image and updates the recognition results in the specified state machine.
      *
      * @param img          The Base64 encoded image.
      * @param timestamp    The timestamp or frame identifier.
      * @param stateMachine The specified state machine.
      */
-    public void processImg(String img, String timestamp, StateMachine stateMachine) {
-        List<? extends AbstractActionObservation> actionObservations = sendFrame(img);
+    public void processImg(String img, String timestamp, StateMachine stateMachine, Map<String, String> config) {
+        List<? extends AbstractActionObservation> actionObservations = sendFrame(img, config);
         Map<Long, List<AbstractActionObservation>> observations = stateMachine.getObservations();
 
         List<AbstractActionObservation> list = actionObservations.stream().map(o -> (AbstractActionObservation) o).toList();

@@ -2,8 +2,9 @@ package nusri.fyp.demo.service;
 
 
 import lombok.extern.slf4j.Slf4j;
+import nusri.fyp.demo.repository.RoboflowWorkflowRepository;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
-import nusri.fyp.demo.service.img_sender.eoid.ImageSenderServiceImplOfEoid;
+import nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfPython;
 import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderServiceImplOfRoboflow;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import nusri.fyp.demo.state_machine.StateMachine;
@@ -29,26 +30,28 @@ import java.util.concurrent.atomic.AtomicReference;
 public class VideoService {
 
     private final ConfigService configService;
-    private final ImageSenderServiceImplOfEoid imageSenderServiceImplOfEoid;
+    private final ImageSenderServiceImplOfPython imageSenderServiceImplOfPython;
     private final ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow;
     private final StateMachineService stateMachineService;
+    private final RoboflowWorkflowRepository roboflowWorkflowRepository;
 
     /**
      * Constructs the {@link VideoService} with the required services for video processing.
      *
      * @param configService The configuration service.
-     * @param imageSenderServiceImplOfEoid The EOID implementation of the image sender service.
+     * @param imageSenderServiceImplOfPython The EOID implementation of the image sender service.
      * @param imageSenderServiceImplOfRoboflow The Roboflow implementation of the image sender service.
      * @param stateMachineService The state machine service.
      */
     public VideoService(ConfigService configService,
-                        ImageSenderServiceImplOfEoid imageSenderServiceImplOfEoid,
+                        ImageSenderServiceImplOfPython imageSenderServiceImplOfPython,
                         ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow,
-                        StateMachineService stateMachineService) {
+                        StateMachineService stateMachineService, RoboflowWorkflowRepository roboflowWorkflowRepository) {
         this.configService = configService;
-        this.imageSenderServiceImplOfEoid = imageSenderServiceImplOfEoid;
+        this.imageSenderServiceImplOfPython = imageSenderServiceImplOfPython;
         this.imageSenderServiceImplOfRoboflow = imageSenderServiceImplOfRoboflow;
         this.stateMachineService = stateMachineService;
+        this.roboflowWorkflowRepository = roboflowWorkflowRepository;
     }
 
     /**
@@ -62,8 +65,10 @@ public class VideoService {
      */
     public ResponseEntity<? extends Serializable> processVideo(String user, String presetName) {
         log.info("user start to process video: {}", user);
-        String s = configService.getUseModel(presetName);
-        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        String modelWithConfig = configService.getUseModel(presetName);
+        ImageSenderService imageSenderService = buildSenderService(modelWithConfig);
+        Map<String, String> config = buildConfig(modelWithConfig);
+
         if (!imageSenderService.tempFiles.containsKey(user)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No file uploaded");
         }
@@ -74,7 +79,7 @@ public class VideoService {
         Thread thread = new Thread(() -> {
             try {
                 Map<Long, List<? extends AbstractActionObservation>> longListMap = imageSenderService
-                        .sendVideoFile(imageSenderService.tempFiles.get(user), user);
+                        .sendVideoFile(imageSenderService.tempFiles.get(user), user, config);
 
                 Map<Long, List<AbstractActionObservation>> listMap = new TreeMap<>();
 
@@ -107,6 +112,8 @@ public class VideoService {
         }
     }
 
+
+
     /**
      * Uploads and saves a video file to the server and resets the state machine.
      * <br> This method ensures that the uploaded file is stored in a fixed path, and the associated state machine is reset.
@@ -118,7 +125,7 @@ public class VideoService {
      */
     public ResponseEntity<String> uploadAndSave(MultipartFile videoFile, String user) throws IOException {
         stateMachineService.stopStateMachine(user);
-        imageSenderServiceImplOfEoid.interrupt(user);
+        imageSenderServiceImplOfPython.interrupt(user);
         imageSenderServiceImplOfRoboflow.interrupt(user);
 
         if (videoFile.isEmpty()) {
@@ -142,7 +149,7 @@ public class VideoService {
         // Log the file saving process
         System.out.println("Saved video file to " + destinationFile.getAbsolutePath());
 
-        imageSenderServiceImplOfEoid.tempFiles.put(user, destinationFile);
+        imageSenderServiceImplOfPython.tempFiles.put(user, destinationFile);
         imageSenderServiceImplOfRoboflow.tempFiles.put(user, destinationFile);
         return null;
     }
@@ -199,11 +206,30 @@ public class VideoService {
         }
 
         StateMachine stateMachineByName = stateMachineService.getStateMachineByName(user);
-        String model = configService.getUseModel(stateMachineByName.getPreset().getName());
-        ImageSenderService imageSenderService = model.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        String modelWithConfig = configService.getUseModel(stateMachineByName.getPreset().getName());
+        ImageSenderService imageSenderService = buildSenderService(modelWithConfig);
+        Map<String, String> config = buildConfig(modelWithConfig);
 
-        imageSenderService.processImg(img, timestamp, stateMachineByName);
+        imageSenderService.processImg(img, timestamp, stateMachineByName, config);
         return true;
+    }
+
+    private Map<String, String> buildConfig(String modelWithConfig) {
+        String[] split = modelWithConfig.split("@");
+        Map<String, String> config = new HashMap<>();
+        if (split[0].equalsIgnoreCase("python")) {
+            config.put("host", split[1]);
+        } else {
+            config.put("workspace_name", split[1]);
+            config.put("workflow_name", split[2]);
+            config.put("workflow_id", roboflowWorkflowRepository.findByWorkspaceNameAndWorkflowName(split[1], split[2]).getWorkflowId());
+        }
+        return config;
+    }
+
+    private ImageSenderService buildSenderService(String modelWithConfig) {
+        String[] split = modelWithConfig.split("@");
+        return split[0].equalsIgnoreCase("python") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
     }
 
     /**
@@ -214,7 +240,7 @@ public class VideoService {
      * @return A double value representing the progress of the video processing (0 = not started, 1 = completed).
      */
     public Double getProgress(String user) {
-        ImageSenderService imageSenderService = imageSenderServiceImplOfEoid.progressMap.containsKey(user) ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        ImageSenderService imageSenderService = imageSenderServiceImplOfPython.progressMap.containsKey(user) ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
         return (double) imageSenderService.progressMap.getOrDefault(user, new HashMap<>()).size() / imageSenderService.totleFramesMap.getOrDefault(user, 1L);
     }
 
@@ -227,7 +253,7 @@ public class VideoService {
      * @throws MalformedURLException If the URL format is invalid.
      */
     public ResponseEntity<?> getFileResponse(String user) throws MalformedURLException {
-        ImageSenderService imageSenderService = imageSenderServiceImplOfEoid.tempFiles.containsKey(user) ? imageSenderServiceImplOfEoid : imageSenderServiceImplOfRoboflow;
+        ImageSenderService imageSenderService = imageSenderServiceImplOfPython.tempFiles.containsKey(user) ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
         File videoFile = imageSenderService.tempFiles.get(user);
         if (!videoFile.exists()) {
             return ResponseEntity.notFound().build();

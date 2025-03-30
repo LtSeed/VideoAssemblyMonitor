@@ -1,7 +1,11 @@
 package nusri.fyp.demo.roboflow.data;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.Map;
 
 /**
  * A class representing a generic response or request data container for Roboflow API operations.
@@ -25,5 +29,9 @@ public class AnyData extends RoboflowRequestData implements RoboflowResponseData
      */
     public AnyData(String data) {
         this.data = data;
+    }
+
+    public AnyData(Map<String, Object> stringObjectMap, ObjectMapper objectMapper) throws JsonProcessingException {
+        this.data = objectMapper.writeValueAsString(stringObjectMap);
     }
 }

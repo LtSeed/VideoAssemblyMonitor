@@ -56,8 +56,11 @@ public class ImageSenderServiceImplOfRoboflow extends ImageSenderService {
      * @return A list of {@link SinglePrediction} objects representing the predictions made by the Roboflow model.
      */
     @Override
-    public List<SinglePrediction> sendFrame(Mat frame) {
-        return roboflowService.sendImg(matToBase64(frame));
+    public List<SinglePrediction> sendFrame(Mat frame, Map<String, String> config) {
+        return roboflowService.sendImg(matToBase64(frame),
+                config.getOrDefault("workspace_name", "tomcai"),
+                config.getOrDefault("workflow_name", "detect-count-and-visualize-2"),
+                config.getOrDefault("workflow_id", "KVPLmLosVn1uvCCTbCfq"));
     }
 
     /**
@@ -67,8 +70,11 @@ public class ImageSenderServiceImplOfRoboflow extends ImageSenderService {
      * @return A list of {@link SinglePrediction} objects representing the predictions made by the Roboflow model.
      */
     @Override
-    public List<SinglePrediction> sendFrame(String frame) {
-        return roboflowService.sendImg(frame);
+    public List<SinglePrediction> sendFrame(String frame, Map<String, String> config) {
+        return roboflowService.sendImg(frame,
+                config.getOrDefault("workspace_name", "tomcai"),
+                config.getOrDefault("workflow_name", "detect-count-and-visualize-2"),
+                config.getOrDefault("workflow_id", "KVPLmLosVn1uvCCTbCfq"));
     }
 
     /**
@@ -80,8 +86,11 @@ public class ImageSenderServiceImplOfRoboflow extends ImageSenderService {
      * @return A {@link CompletableFuture} that will contain a list of {@link AbstractActionObservation} objects, representing the predictions.
      */
     @Override
-    public CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user) {
-        CompletableFuture<List<AbstractActionObservation>> listCompletableFuture = roboflowService.sendImgAsync(matToBase64(frame));
+    public CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user, Map<String, String> config) {
+        CompletableFuture<List<AbstractActionObservation>> listCompletableFuture = roboflowService.sendImgAsync(matToBase64(frame),
+                config.getOrDefault("workspace_name", "tomcai"),
+                config.getOrDefault("workflow_name", "detect-count-and-visualize-2"),
+                config.getOrDefault("workflow_id", "KVPLmLosVn1uvCCTbCfq"));
         processes.put(user, listCompletableFuture);
         return listCompletableFuture;
     }

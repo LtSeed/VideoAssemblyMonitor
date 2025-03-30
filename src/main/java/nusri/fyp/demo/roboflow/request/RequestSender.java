@@ -4,7 +4,6 @@ import jakarta.annotation.Nullable;
 import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
 import nusri.fyp.demo.roboflow.data.RoboflowResponseData;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
 
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
@@ -13,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
  * Interface for sending HTTP requests to the Roboflow API.
  * <br> This interface defines methods for sending asynchronous HTTP requests, both POST and GET, to the Roboflow API with appropriate request and response data handling.
  */
-@Component
 public interface RequestSender {
 
     /**

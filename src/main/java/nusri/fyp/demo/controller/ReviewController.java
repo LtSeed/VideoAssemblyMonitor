@@ -30,8 +30,7 @@ public class ReviewController {
     private final StateMachineLogRepository stateMachineLogRepository;
     private final ReviewService reviewService;
     private final ConfigService configService;
-    private final ActionRepository actionRepository;
-    private final ObjectRepository objectRepository;
+
 
     /**
      * Retrieves all state machine logs.
@@ -128,15 +127,12 @@ public class ReviewController {
      * @param stateMachineLogRepository The repository for state machine logs.
      * @param reviewService The service for handling review operations.
      * @param configService The configuration service.
-     * @param actionRepository The repository for actions.
-     * @param objectRepository The repository for objects.
      */
-    ReviewController(StateMachineLogRepository stateMachineLogRepository, ReviewService reviewService, ConfigService configService, ActionRepository actionRepository, ObjectRepository objectRepository) {
+    ReviewController(StateMachineLogRepository stateMachineLogRepository, ReviewService reviewService, ConfigService configService) {
         this.stateMachineLogRepository = stateMachineLogRepository;
         this.reviewService = reviewService;
         this.configService = configService;
-        this.actionRepository = actionRepository;
-        this.objectRepository = objectRepository;
+
     }
 
 }

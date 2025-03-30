@@ -17,6 +17,7 @@ public class PredefinedWorkflowDescribeInterfaceRequest extends RoboflowRequestD
      * The API key required to authenticate the request.
      * <br> This field is necessary to associate the request with a specific account and for authorization purposes.
      */
+
     private String apiKey;
 
     /**

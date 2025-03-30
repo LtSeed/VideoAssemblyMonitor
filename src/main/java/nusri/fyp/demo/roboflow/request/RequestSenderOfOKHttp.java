@@ -32,7 +32,6 @@ public class RequestSenderOfOKHttp implements RequestSender {
      *
      * @param roboflowConfig The configuration object for Roboflow that provides the ObjectMapper.
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public RequestSenderOfOKHttp(RoboflowConfig roboflowConfig) {
         mapper = roboflowConfig.getObjectMapper();
     }

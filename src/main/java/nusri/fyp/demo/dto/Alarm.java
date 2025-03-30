@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Represents an alert information that appears in a state machine or process,
+ * Represents alert information that appears in a state machine or process,
  * such as timeouts or execution order errors.
  */
 @Getter

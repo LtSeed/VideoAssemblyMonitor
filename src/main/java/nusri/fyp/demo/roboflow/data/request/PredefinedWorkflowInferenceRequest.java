@@ -2,10 +2,12 @@ package nusri.fyp.demo.roboflow.data.request;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import nusri.fyp.demo.roboflow.data.AnyData;
 import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
+import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a request for inference using a predefined workflow.
@@ -26,7 +28,7 @@ public class PredefinedWorkflowInferenceRequest extends RoboflowRequestData {
      * A dictionary containing each parameter defined as an input for the chosen workflow.
      * <br> This object includes the input parameters required by the predefined workflow.
      */
-    private RoboflowRequestData inputs; // Replace Object with a specific type if available
+    private Map<String, RoboflowRequestData> inputs = new HashMap<>(); // Replace Object with a specific type if available
 
     /**
      * A list of fields to be excluded from the inference request.
@@ -51,4 +53,8 @@ public class PredefinedWorkflowInferenceRequest extends RoboflowRequestData {
      * <br> If true, the system will use cached results for faster processing, if available.
      */
     private boolean useCache;
+
+    public void addImage(InferenceRequestImage image) {
+        inputs.put("image", image);
+    }
 }

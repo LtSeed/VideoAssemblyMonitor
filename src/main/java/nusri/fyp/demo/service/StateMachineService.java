@@ -62,6 +62,7 @@ public class StateMachineService {
         List<Node> nodes = new ArrayList<>(List.copyOf(stateMachineByName.getNodes()));
         nodes.add(stateMachineByName.getIdle());
         return nodes.stream()
+                .filter(node -> !node.isHandlingNode())
                 .map(o -> new ProgressBar(o, configService, stateMachineByName.getPreset().getName()))
                 .toList();
     }
@@ -122,8 +123,18 @@ public class StateMachineService {
             return new ArrayList<>();
         }
 
+        double pHandlingError = 1, pHandlingTimeout = 1;
+
         for (Node node : nodes) {
+
             double error = node.E(quotaConfig), timeout = node.D(quotaConfig);
+            boolean isHandlingNode = node.isHandlingNode();
+
+            if (!isHandlingNode) {
+                pHandlingError *= 1 - error;
+                pHandlingTimeout *= 1 - timeout;
+                continue;
+            }
 
             if (error != 0) {
                 int percentage = (int) Math.round(error * 100);
@@ -144,6 +155,27 @@ public class StateMachineService {
                         "error"
                 ));
             }
+        }
+
+        pHandlingTimeout = 1 - pHandlingTimeout;
+        pHandlingError = 1 - pHandlingError;
+
+        if (pHandlingError != 0) {
+            alarms.add(new Alarm(
+                    "Error in Handling",
+                    "Handling Node may be done in wrong order.",
+                    (int) Math.round(pHandlingError * 100),
+                    "warning"
+            ));
+        }
+
+        if (pHandlingTimeout != 0) {
+            alarms.add(new Alarm(
+                    "Timeout in Handling",
+                    "Handling Node exceeded time limit.",
+                    (int) Math.round(pHandlingTimeout * 100),
+                    "warning"
+            ));
         }
 
         return alarms;

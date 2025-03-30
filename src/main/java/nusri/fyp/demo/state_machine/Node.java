@@ -338,4 +338,14 @@ public class Node {
                 .orElse(other)
                 .getUpBoundary()) / 1000;
     }
+
+    /**
+     * Get if the node is handling node. A handling node means this node will not add anything to the
+     * assembly while its action only contains "transfer".
+     *
+     * @return true if the node is handling node, false otherwise.
+     */
+    public boolean isHandlingNode() {
+        return this.getActions().contains("transfer");
+    }
 }

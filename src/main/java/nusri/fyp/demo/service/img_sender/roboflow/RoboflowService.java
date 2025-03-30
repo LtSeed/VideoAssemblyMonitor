@@ -1,7 +1,8 @@
 package nusri.fyp.demo.service.img_sender.roboflow;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import nusri.fyp.demo.dto.WorkflowInferenceResponseDTO;
+import nusri.fyp.demo.roboflow.data.entity.workflow.dto.WorkflowInferenceResponseDTO;
 import nusri.fyp.demo.entity.ActionWithId;
 import nusri.fyp.demo.entity.ObjectWithId;
 import nusri.fyp.demo.repository.ActionRepository;
@@ -12,16 +13,21 @@ import nusri.fyp.demo.roboflow.data.entity.InferenceImageDimensions;
 import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
 import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
 import nusri.fyp.demo.roboflow.data.entity.workflow.WorkflowOutputData;
-import nusri.fyp.demo.roboflow.data.request.WorkflowSpecificationInferenceRequest;
+import nusri.fyp.demo.roboflow.data.request.PredefinedWorkflowDescribeInterfaceRequest;
+import nusri.fyp.demo.roboflow.data.request.PredefinedWorkflowInferenceRequest;
 import nusri.fyp.demo.roboflow.data.response.*;
 import nusri.fyp.demo.roboflow.request.RequestSenderOfOKHttp;
 import nusri.fyp.demo.roboflow.request.RoboflowRequest;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import static nusri.fyp.demo.roboflow.request.RoboflowRequest.*;
 
 /**
  * Service that encapsulates the logic for making inference requests to the Roboflow platform, including both synchronous
@@ -54,15 +60,109 @@ public class RoboflowService {
      * @param objectRepository The repository used for object-to-id mapping.
      * @param actionRepository The repository used for action-to-id mapping.
      * @param roboflowConfig The configuration containing API credentials and settings for Roboflow.
+     * @param objectMapper The object mapper.
      */
     RoboflowService(RequestSenderOfOKHttp requestSenderOfOKHttp,
                     ObjectRepository objectRepository,
                     ActionRepository actionRepository,
-                    RoboflowConfig roboflowConfig) {
+                    RoboflowConfig roboflowConfig, ObjectMapper objectMapper) {
         this.requestSenderOfOKHttp = requestSenderOfOKHttp;
         this.objectRepository = objectRepository;
         this.actionRepository = actionRepository;
         this.roboflowConfig = roboflowConfig;
+
+        try {
+            log.info("Roboflow WORKFLOW_EXECUTION_ENGINE_VERSIONS: {}", WORKFLOW_EXECUTION_ENGINE_VERSIONS.send(requestSenderOfOKHttp, roboflowConfig).toString());
+
+            RoboflowResponseData send = testPredefineWorkflow(requestSenderOfOKHttp, roboflowConfig, "tomcai", "detect-count-and-visualize-2");
+            log.debug("Roboflow WORKFLOW_DESCRIBE_INTERFACE_PREDEFINED : {}", send);
+
+            testPredefineWorkflowOnImage(requestSenderOfOKHttp, roboflowConfig);
+
+        } catch (ExecutionException e) {
+            log.error("Roboflow Execution exception", e);
+        } catch (InterruptedException e) {
+            log.error("Roboflow Execution engine versions getting interrupted");
+        } catch (IOException e) {
+            log.error("Roboflow IO exception", e);
+        }
+    }
+
+
+    private RoboflowResponseData runPredefineWorkflowOnImage(RequestSenderOfOKHttp requestSenderOfOKHttp, RoboflowConfig roboflowConfig, String workspace_name, String workflow_name, String base64, String workflowId) throws IOException, ExecutionException, InterruptedException {
+
+        PredefinedWorkflowInferenceRequest data3 = getPredefinedWorkflowInferenceRequest(roboflowConfig, base64, workflowId);
+
+        return WORKFLOW_RUN_PREDEFINED.send(requestSenderOfOKHttp,
+                data3,
+                roboflowConfig,
+                buildWorkflowPathMap(workspace_name, workflow_name));
+    }
+
+    private CompletableFuture<RoboflowResponseData> runPredefineWorkflowOnImageAsync(RequestSenderOfOKHttp requestSenderOfOKHttp, RoboflowConfig roboflowConfig, String workspace_name, String workflow_name, String base64, String workflowId) throws IOException, ExecutionException, InterruptedException {
+
+        PredefinedWorkflowInferenceRequest data3 = getPredefinedWorkflowInferenceRequest(roboflowConfig, base64, workflowId);
+
+        return WORKFLOW_RUN_PREDEFINED.sendAsync(requestSenderOfOKHttp,
+                data3,
+                roboflowConfig,
+                buildWorkflowPathMap(workspace_name, workflow_name));
+    }
+
+    private PredefinedWorkflowInferenceRequest getPredefinedWorkflowInferenceRequest(RoboflowConfig roboflowConfig, String base64, String workflowId) {
+        PredefinedWorkflowInferenceRequest data3 = new PredefinedWorkflowInferenceRequest();
+        data3.setApiKey(roboflowConfig.getApiKey());
+        data3.setWorkflowId(workflowId);
+        data3.setUseCache(false);
+        data3.setExcludedFields(new ArrayList<>());
+        data3.setEnableProfiling(false);
+        InferenceRequestImage image = new InferenceRequestImage();
+
+        image.setType("base64");
+        image.setValue(base64);
+        log.info("test image size: {}", base64.length());
+        image.setPath("test2.png");
+        image.setPrefix("data:image/png;base64,");
+        image.setNewDimensions(new InferenceImageDimensions(2048, 1114));
+        image.setOriginalDimensions(new InferenceImageDimensions(2560, 1392));
+        image.setResized(false);
+        data3.addImage(image);
+        return data3;
+    }
+
+
+    private void testPredefineWorkflowOnImage(RequestSenderOfOKHttp requestSenderOfOKHttp, RoboflowConfig roboflowConfig) throws IOException, ExecutionException, InterruptedException {
+
+        Path path = Paths.get("C:\\Users\\dell\\Desktop\\test2.png");
+        byte[] imageBytes = Files.readAllBytes(path);
+        String base64String = Base64.getEncoder().encodeToString(imageBytes);
+
+        log.info("Roboflow WORKFLOW_RUN_PREDEFINED TEST: {}", runPredefineWorkflowOnImage(requestSenderOfOKHttp,
+                roboflowConfig,
+                "tomcai",
+                "detect-count-and-visualize-2",
+                base64String, "KVPLmLosVn1uvCCTbCfq"));
+    }
+
+    private Map<String, String> buildWorkflowPathMap(String workspace_name, String workflow_name) {
+        workflow_name =  workflow_name.replace(" ", "-");
+        workspace_name = workspace_name.replace(" ", "-");
+        workflow_name =  workflow_name.replace("，", "");
+        workspace_name = workspace_name.replace("，", "");
+        workflow_name = workflow_name.toLowerCase();
+        workspace_name = workspace_name.toLowerCase();
+        Map<String, String> pathValues = new HashMap<>();
+        pathValues.put("workspace_name", workspace_name);
+        pathValues.put("workflow_name", workflow_name);
+        return pathValues;
+    }
+
+    private RoboflowResponseData testPredefineWorkflow(RequestSenderOfOKHttp requestSenderOfOKHttp, RoboflowConfig roboflowConfig, String workspace_name, String workflow_name) throws ExecutionException, InterruptedException {
+        buildWorkflowPathMap(workspace_name, workflow_name);
+        PredefinedWorkflowDescribeInterfaceRequest data = new PredefinedWorkflowDescribeInterfaceRequest();
+        data.setApiKey(roboflowConfig.getApiKey());
+        data.setUseCache(false);
+        return WORKFLOW_DESCRIBE_INTERFACE_PREDEFINED.send(requestSenderOfOKHttp, data, roboflowConfig, buildWorkflowPathMap(workspace_name, workflow_name));
     }
 
     /**
@@ -73,10 +173,10 @@ public class RoboflowService {
      * @param base64String The Base64-encoded image string to be sent to Roboflow.
      * @return A list of {@link SinglePrediction} objects representing the predictions from Roboflow.
      */
-    public List<SinglePrediction> sendImg(String base64String) {
+    public List<SinglePrediction> sendImg(String base64String, String workspace_name, String workflow_name, String workflow_id) {
         try {
-            WorkflowSpecificationInferenceRequest request = getRequest(base64String);
-            RoboflowResponseData send = RoboflowRequest.WORKFLOW_RUN_SPECIFICATION.send(requestSenderOfOKHttp, request, roboflowConfig);
+
+            RoboflowResponseData send = runPredefineWorkflowOnImage(requestSenderOfOKHttp, roboflowConfig, workspace_name, workflow_name, base64String, workflow_id);
             if (send instanceof HTTPValidationError) {
                 log.error("HTTPValidationError when sync sending img:: {}", send);
             }
@@ -107,7 +207,7 @@ public class RoboflowService {
                 return predictions;
             }
 
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException | IOException e) {
             log.error(e.getMessage());
         }
         log.error("sendImg exception");
@@ -122,9 +222,17 @@ public class RoboflowService {
      * @param base64String The Base64-encoded image string to be sent to Roboflow.
      * @return A {@link CompletableFuture} containing a list of {@link AbstractActionObservation} objects representing the predictions.
      */
-    public CompletableFuture<List<AbstractActionObservation>> sendImgAsync(String base64String) {
-        WorkflowSpecificationInferenceRequest request = getRequest(base64String);
-        CompletableFuture<RoboflowResponseData> completableFuture = RoboflowRequest.WORKFLOW_RUN_SPECIFICATION.sendAsync(requestSenderOfOKHttp, request, roboflowConfig);
+    public CompletableFuture<List<AbstractActionObservation>> sendImgAsync(String base64String, String workspace_name, String workflow_name, String workflow_id) {
+
+        CompletableFuture<RoboflowResponseData> completableFuture = null;
+        try {
+            completableFuture = runPredefineWorkflowOnImageAsync(requestSenderOfOKHttp, roboflowConfig, workspace_name, workflow_name, base64String, workflow_id);
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            log.error(e.getMessage());
+            CompletableFuture<List<AbstractActionObservation>> completableFutureEx = new CompletableFuture<>();
+            completableFutureEx.complete(new ArrayList<>());
+            return completableFutureEx;
+        }
 
         return completableFuture.thenApply(send -> {
             if (send instanceof HTTPValidationError) {
@@ -158,123 +266,5 @@ public class RoboflowService {
             }
             return new ArrayList<>();
         });
-    }
-
-    /**
-     * Constructs a {@link WorkflowSpecificationInferenceRequest} containing the required parameters for the inference request.
-     * <br> This method creates a new request to send to the Roboflow API, including the Base64-encoded image and other necessary fields.
-     *
-     * @param base64String The Base64-encoded image string to be sent to Roboflow.
-     * @return A {@link WorkflowSpecificationInferenceRequest} containing all necessary fields for the inference request.
-     */
-    private WorkflowSpecificationInferenceRequest getRequest(String base64String) {
-        WorkflowSpecificationInferenceRequest request = new WorkflowSpecificationInferenceRequest();
-        request.setApiKey(roboflowConfig.getApiKey());
-        InferenceRequestImage image = new InferenceRequestImage();
-        image.setType("base64");
-        image.setValue(base64String);
-        image.setPath("test2.png");
-        image.setPrefix("data:image/png;base64,");
-        image.setNewDimensions(new InferenceImageDimensions(2048, 1114));
-        image.setOriginalDimensions(new InferenceImageDimensions(2560, 1392));
-        image.setResized(false);
-
-        request.addImage(image);
-        request.setIsPreview(true);
-        request.setWorkflowId("NUqv8lH6pNS8yfNxmfmQ");
-        request.setSpecification(buildSpecification());
-        return request;
-    }
-
-    /**
-     * Builds the specification for the inference workflow that is sent to Roboflow.
-     * <br> This method constructs the entire inference workflow, including steps for object detection, visualization, and counting.
-     *
-     * @return A Map representing the inference workflow specification, which will be serialized into JSON and sent to Roboflow.
-     */
-    public static Map<String, Object> buildSpecification() {
-        Map<String, Object> specification = new HashMap<>();
-        specification.put("version", "1.0");
-
-        List<Map<String, Object>> inputs = new ArrayList<>();
-        Map<String, Object> input = new HashMap<>();
-        input.put("type", "InferenceImage");
-        input.put("name", "image");
-        inputs.add(input);
-        specification.put("inputs", inputs);
-
-        List<Map<String, Object>> steps = getStep();
-        specification.put("steps", steps);
-
-        List<Map<String, Object>> outputs = getOutput();
-        specification.put("outputs", outputs);
-
-        return specification;
-    }
-
-    private static List<Map<String, Object>> getOutput() {
-        List<Map<String, Object>> outputs = new ArrayList<>();
-
-        Map<String, Object> output1 = new HashMap<>();
-        output1.put("type", "JsonField");
-        output1.put("name", "count_objects");
-        output1.put("coordinates_system", "own");
-        output1.put("selector", "$steps.count_objects.output");
-        outputs.add(output1);
-
-        Map<String, Object> output2 = new HashMap<>();
-        output2.put("type", "JsonField");
-        output2.put("name", "output_image");
-        output2.put("coordinates_system", "own");
-        output2.put("selector", "$steps.annotated_image.image");
-        outputs.add(output2);
-
-        Map<String, Object> output3 = new HashMap<>();
-        output3.put("type", "JsonField");
-        output3.put("name", "predictions");
-        output3.put("coordinates_system", "own");
-        output3.put("selector", "$steps.model.predictions");
-        outputs.add(output3);
-
-        return outputs;
-    }
-
-    private static List<Map<String, Object>> getStep() {
-        List<Map<String, Object>> steps = new ArrayList<>();
-
-        Map<String, Object> step1 = new HashMap<>();
-        step1.put("type", "roboflow_core/roboflow_object_detection_model@v1");
-        step1.put("name", "model");
-        step1.put("images", "$inputs.image");
-        step1.put("model_id", "small-rice-cooker/7");
-        steps.add(step1);
-
-        Map<String, Object> step2 = new HashMap<>();
-        step2.put("type", "roboflow_core/bounding_box_visualization@v1");
-        step2.put("name", "detection_visualization");
-        step2.put("image", "$inputs.image");
-        step2.put("predictions", "$steps.model.predictions");
-        steps.add(step2);
-
-        Map<String, Object> step3 = new HashMap<>();
-        step3.put("type", "roboflow_core/property_definition@v1");
-        step3.put("name", "count_objects");
-        step3.put("data", "$steps.model.predictions");
-
-        List<Map<String, Object>> operations = new ArrayList<>();
-        Map<String, Object> op = new HashMap<>();
-        op.put("type", "SequenceLength");
-        operations.add(op);
-        step3.put("operations", operations);
-        steps.add(step3);
-
-        Map<String, Object> step4 = new HashMap<>();
-        step4.put("type", "roboflow_core/label_visualization@v1");
-        step4.put("name", "annotated_image");
-        step4.put("image", "$steps.detection_visualization.image");
-        step4.put("predictions", "$steps.model.predictions");
-        steps.add(step4);
-
-        return steps;
     }
 }

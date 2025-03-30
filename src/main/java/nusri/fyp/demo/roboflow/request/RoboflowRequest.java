@@ -1,7 +1,7 @@
 package nusri.fyp.demo.roboflow.request;
 
 import lombok.extern.slf4j.Slf4j;
-import nusri.fyp.demo.dto.WorkflowInferenceResponseDTO;
+import nusri.fyp.demo.roboflow.data.entity.workflow.dto.WorkflowInferenceResponseDTO;
 import nusri.fyp.demo.roboflow.RoboflowConfig;
 import nusri.fyp.demo.roboflow.data.AnyData;
 import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
@@ -132,13 +132,13 @@ public enum RoboflowRequest {
 
     /**
      * Describes the interface of a predefined workflow.
-     * <br>Endpoint:  `/{workspace_name}/workflows/{workflow_id}/describe_interface`
+     * <br>Endpoint:  `/{workspace_name}/workflows/{workflow_name}/describe_interface`
      * <br>HTTP Method:  `POST`
      * <br>Success Response:  {@link DescribeInterfaceResponse}
      * <br>Failure Response:  {@link HTTPValidationError}
      * <br>Request Body:  {@link PredefinedWorkflowDescribeInterfaceRequest}
      */
-    WORKFLOW_DESCRIBE_INTERFACE_PREDEFINED("POST", "/{workspace_name}/workflows/{workflow_id}/describe_interface", DescribeInterfaceResponse.class, HTTPValidationError.class, PredefinedWorkflowDescribeInterfaceRequest.class),
+    WORKFLOW_DESCRIBE_INTERFACE_PREDEFINED("POST", "/{workspace_name}/workflows/{workflow_name}/describe_interface", DescribeInterfaceResponse.class, HTTPValidationError.class, PredefinedWorkflowDescribeInterfaceRequest.class),
 
     /**
      * Describes the interface of a workflow based on its specification.
@@ -152,13 +152,13 @@ public enum RoboflowRequest {
 
     /**
      * Runs a predefined workflow.
-     * <br>Endpoint:  `/{workspace_name}/workflows/{workflow_id}`
+     * <br>Endpoint:  `/{workspace_name}/workflows/{workflow_name}`
      * <br>HTTP Method:  `POST`
-     * <br>Success Response:  {@link WorkflowInferenceResponse}
+     * <br>Success Response:  {@link WorkflowInferenceResponseDTO}
      * <br>Failure Response:  {@link HTTPValidationError}
      * <br>Request Body:  {@link PredefinedWorkflowInferenceRequest}
      */
-    WORKFLOW_RUN_PREDEFINED("POST", "/{workspace_name}/workflows/{workflow_id}", WorkflowInferenceResponse.class, HTTPValidationError.class, PredefinedWorkflowInferenceRequest.class),
+    WORKFLOW_RUN_PREDEFINED("POST", "/{workspace_name}/workflows/{workflow_name}", WorkflowInferenceResponseDTO.class, HTTPValidationError.class, PredefinedWorkflowInferenceRequest.class),
 
     /**
      * Runs a workflow based on its specification.
@@ -597,6 +597,7 @@ public enum RoboflowRequest {
             throw new IllegalArgumentException("URI contains unprocessed placeholder: {*}");
         }
 
+        log.info("URI result with path input : {}", resultUri);
         return new URI(resultUri);
     }
 

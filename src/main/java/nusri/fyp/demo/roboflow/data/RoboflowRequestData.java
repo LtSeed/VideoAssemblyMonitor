@@ -35,14 +35,7 @@ public abstract class RoboflowRequestData {
      */
     public HttpRequest.BodyPublisher toBodyPublisher(ObjectMapper mapper) {
         try {
-            // Serialize the request data to JSON
             String jsonPayload = mapper.writeValueAsString(this);
-
-            // Save the serialized JSON to a file for debugging
-            String filePath = "jsonPayload.json";
-            Files.writeString(Paths.get(filePath), jsonPayload);
-            log.info("jsonPayload has been saved to the file: {}", filePath);
-
             return HttpRequest.BodyPublishers.ofString(jsonPayload);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -60,7 +53,6 @@ public abstract class RoboflowRequestData {
     @SuppressWarnings("deprecation")
     public RequestBody toRequestBody(ObjectMapper mapper) {
         try {
-            // Serialize the request data to JSON and create a RequestBody with the JSON content
             return RequestBody.create(
                     Objects.requireNonNull(MediaType.parse("application/json")),
                     mapper.writeValueAsString(this)
@@ -68,7 +60,6 @@ public abstract class RoboflowRequestData {
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
             return RequestBody.create(Objects.requireNonNull(MediaType.parse("application/json")), "{}");
-            // Return an empty JSON object if serialization fails
         }
     }
 }

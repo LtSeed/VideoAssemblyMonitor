@@ -143,6 +143,9 @@ public class ConfigController {
     @PutMapping("/model/preset/{presetName}")
     public ResponseEntity<?> updateUseModelPreset(@PathVariable("presetName") String presetName,
                                                   @RequestBody String modelValue) {
+        if (!configService.getAllLegalModel().contains(modelValue)) {
+            return ResponseEntity.badRequest().body("No such model setting");
+        }
         try {
             java.util.Map<String, String> useModel = configService.getUseModel();
             if (useModel == null) {
@@ -174,6 +177,9 @@ public class ConfigController {
     @PutMapping("/model/preset-default")
     public ResponseEntity<?> updateUseModelPresetAll(@RequestBody String modelValue) {
         try {
+            if (!configService.getAllLegalModel().contains(modelValue)) {
+                return ResponseEntity.badRequest().body("No such model setting");
+            }
             java.util.Map<String, String> useModel = new java.util.HashMap<>();
             useModel.put("default", modelValue);
             configService.setUseModel(useModel);
@@ -182,6 +188,16 @@ public class ConfigController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("更新模型失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * Endpoint for get the list of all legal model across all presets.
+     *
+     * @return ResponseEntity indicating all legal model list.
+     */
+    @GetMapping("/model/all")
+    public ResponseEntity<?> getAllLegalModel() {
+        return ResponseEntity.ok(configService.getAllLegalModel());
     }
 
 

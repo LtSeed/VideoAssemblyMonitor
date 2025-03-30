@@ -7,17 +7,19 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.annotation.Config;
 import nusri.fyp.demo.entity.ConfigChangeLog;
+import nusri.fyp.demo.entity.PythonServer;
 import nusri.fyp.demo.entity.QuotaConfig;
+import nusri.fyp.demo.entity.RoboflowWorkflow;
 import nusri.fyp.demo.repository.ConfigChangeLogRepository;
 import nusri.fyp.demo.repository.PresetRepository;
+import nusri.fyp.demo.repository.PythonServerRepository;
+import nusri.fyp.demo.repository.RoboflowWorkflowRepository;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Service class responsible for managing configuration settings in the application.
@@ -39,6 +41,8 @@ public class ConfigService implements InitializingBean {
     private final ConfigChangeLogRepository configChangeLogRepository;
     private final ObjectMapper objectMapper;
     private final PresetRepository presetRepository;
+    private final PythonServerRepository pythonServerRepository;
+    private final RoboflowWorkflowRepository roboflowWorkflowRepository;
 
     @Config(defaultValue = "\"http://localhost\"")
     private String pythonServerHost;
@@ -55,7 +59,7 @@ public class ConfigService implements InitializingBean {
     @Config(defaultValue = "\"D:\\\\save\"")
     private String videoPath;
 
-    @Config(defaultValue = "{\"default\":\"yolo\"}")
+    @Config(defaultValue = "{\"default\":\"roboflow@tomcai@detect-count-and-visualize-2\"}")
     private Map<String, String> useModel;
 
     @Config(defaultValue = "\"10\"")
@@ -75,10 +79,12 @@ public class ConfigService implements InitializingBean {
      * @param objectMapper The object mapper used for JSON serialization and deserialization.
      * @param presetRepository The repository for preset data.
      */
-    public ConfigService(ConfigChangeLogRepository configChangeLogRepository, ObjectMapper objectMapper, PresetRepository presetRepository) {
+    public ConfigService(ConfigChangeLogRepository configChangeLogRepository, ObjectMapper objectMapper, PresetRepository presetRepository, PythonServerRepository pythonServerRepository, RoboflowWorkflowRepository roboflowWorkflowRepository) {
         this.configChangeLogRepository = configChangeLogRepository;
         this.objectMapper = objectMapper;
         this.presetRepository = presetRepository;
+        this.pythonServerRepository = pythonServerRepository;
+        this.roboflowWorkflowRepository = roboflowWorkflowRepository;
     }
 
 
@@ -193,6 +199,19 @@ public class ConfigService implements InitializingBean {
      */
     public String getUseModel(String presetName) {
         return useModel.getOrDefault(presetName, useModel.get("default"));
+    }
+
+    @Cacheable(value = "getAllLegalModel")
+    public List<String> getAllLegalModel() {
+        List<PythonServer> pythonServers = pythonServerRepository.findAll();
+        List<RoboflowWorkflow> roboflowWorkflows = roboflowWorkflowRepository.findAll();
+
+        List<String> models = new ArrayList<>();
+
+        pythonServers.forEach(pythonServer -> models.add("python@" + pythonServer.toString()));
+        roboflowWorkflows.forEach(pythonServer -> models.add("roboflow@" + pythonServer.toString()));
+
+        return models;
     }
 
     /**

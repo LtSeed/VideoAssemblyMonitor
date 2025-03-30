@@ -1,6 +1,7 @@
 package nusri.fyp.demo.roboflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.Getter;
 import nusri.fyp.demo.roboflow.data.AnyData;
@@ -33,6 +34,7 @@ public class RoboflowConfig {
         module.addDeserializer(AnyData.class, new AnyDataDeserializer());
         module.addSerializer(AnyData.class, new AnyDataSerializer());
         objectMapper.registerModule(module);
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         this.configService = configService;
     }
 
