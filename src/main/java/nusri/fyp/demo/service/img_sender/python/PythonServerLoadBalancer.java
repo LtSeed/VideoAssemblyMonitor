@@ -3,7 +3,6 @@ package nusri.fyp.demo.service.img_sender.python;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import nusri.fyp.demo.service.ConfigService;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;

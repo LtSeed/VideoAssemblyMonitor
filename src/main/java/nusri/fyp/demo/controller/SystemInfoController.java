@@ -5,6 +5,7 @@ import nusri.fyp.demo.dto.JvmInfoDto;
 import nusri.fyp.demo.dto.SystemInfoDto;
 import nusri.fyp.demo.service.SystemInfoService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
+@RequestMapping("/management")
 public class SystemInfoController {
 
     private final SystemInfoService systemInfoService;
@@ -33,7 +35,7 @@ public class SystemInfoController {
      *
      * @return A {@link SystemInfoDto} containing system resource information.
      */
-    @GetMapping("/management/system-info")
+    @GetMapping("/system-info")
     public SystemInfoDto getSystemInfo() {
         return systemInfoService.getSystemInfo();
     }
@@ -44,7 +46,7 @@ public class SystemInfoController {
      *
      * @return A {@link JvmInfoDto} containing JVM resource information.
      */
-    @GetMapping("/management/jvm-info")
+    @GetMapping("/jvm-info")
     public JvmInfoDto getJvmInfo() {
         return systemInfoService.getJvmInfo();
     }

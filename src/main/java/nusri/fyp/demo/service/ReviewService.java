@@ -1,17 +1,12 @@
 package nusri.fyp.demo.service;
 
-import io.micrometer.observation.Observation;
 import lombok.extern.slf4j.Slf4j;
+import nusri.fyp.demo.dto.StateMachineLogDto;
 import nusri.fyp.demo.dto.StepStatsDto;
-import nusri.fyp.demo.entity.Preset;
 import nusri.fyp.demo.entity.PresetNode;
 import nusri.fyp.demo.entity.StateMachineLog;
-import nusri.fyp.demo.repository.ActionRepository;
-import nusri.fyp.demo.repository.ObjectRepository;
 import nusri.fyp.demo.repository.PresetRepository;
 import nusri.fyp.demo.repository.StateMachineLogRepository;
-import nusri.fyp.demo.state_machine.StateMachine;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,8 +27,7 @@ public class ReviewService {
     private final StateMachineLogRepository stateMachineLogRepository;
     private final ConfigService configService;
     private final PresetRepository presetRepository;
-    private final ActionRepository actionRepository;
-    private final ObjectRepository objectRepository;
+
 
     /**
      * Constructs the {@link ReviewService} with the necessary repositories and services.
@@ -41,15 +35,13 @@ public class ReviewService {
      * @param stateMachineLogRepository The repository for state machine logs.
      * @param configService The configuration service.
      * @param presetRepository The repository for preset configurations.
-     * @param actionRepository The repository for actions.
-     * @param objectRepository The repository for objects.
+
      */
-    public ReviewService(StateMachineLogRepository stateMachineLogRepository, ConfigService configService, PresetRepository presetRepository, ActionRepository actionRepository, ObjectRepository objectRepository) {
+    public ReviewService(StateMachineLogRepository stateMachineLogRepository, ConfigService configService, PresetRepository presetRepository) {
         this.stateMachineLogRepository = stateMachineLogRepository;
         this.configService = configService;
         this.presetRepository = presetRepository;
-        this.actionRepository = actionRepository;
-        this.objectRepository = objectRepository;
+
     }
 
     /**
@@ -239,5 +231,14 @@ public class ReviewService {
                         .toList())
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves all State Machine Logs in the database, using the {@link StateMachineLogRepository}
+     *
+     * @return A list of all State Machine Logs in the database
+     */
+    public List<StateMachineLogDto> getAllStateMachineLogs() {
+        return stateMachineLogRepository.findAll().stream().map(StateMachineLogDto::new).toList();
     }
 }

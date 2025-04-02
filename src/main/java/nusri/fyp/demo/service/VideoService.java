@@ -1,6 +1,5 @@
 package nusri.fyp.demo.service;
 
-
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.repository.RoboflowWorkflowRepository;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
@@ -22,8 +21,29 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Service class for handling video uploads, processing video frames, and interacting with the state machine.
- * <br> This service processes uploaded video files, sending frames to a model for recognition and interacting with the state machine for processing.
+ * <b>Service class for handling video uploads, processing video frames, and interacting with the state machine.</b>
+ * <br> This class provides functionalities to:
+ * <ul>
+ *     <li>Upload and save video files.</li>
+ *     <li>Process uploaded videos by sending frames for recognition.</li>
+ *     <li>Manage recognition results and integrate them with a {@link StateMachine}.</li>
+ *     <li>Handle single-frame (image) processing for real-time recognition updates.</li>
+ * </ul>
+ * <br>
+ * <p>
+ * This service works in close association with:
+ * <br> - {@link ConfigService} for retrieving model configurations and file paths.
+ * <br> - {@link ImageSenderServiceImplOfPython} and {@link ImageSenderServiceImplOfRoboflow} for frame/image processing.
+ * <br> - {@link StateMachineService} for integrating recognition results into the state machine.
+ * <br> - {@link RoboflowWorkflowRepository} for retrieving workflow IDs in a Roboflow environment.
+ * </p>
+ *
+ * @see ConfigService
+ * @see StateMachineService
+ * @see ImageSenderService
+ * @see ImageSenderServiceImplOfPython
+ * @see ImageSenderServiceImplOfRoboflow
+ * @see RoboflowWorkflowRepository
  */
 @Service
 @Slf4j
@@ -36,17 +56,26 @@ public class VideoService {
     private final RoboflowWorkflowRepository roboflowWorkflowRepository;
 
     /**
-     * Constructs the {@link VideoService} with the required services for video processing.
+     * Constructs the {@link VideoService} with the required dependencies for video processing.
+     * <br> These dependencies include {@link ConfigService}, two different implementations of
+     * {@link ImageSenderService}, the {@link StateMachineService}, and the {@link RoboflowWorkflowRepository}.
      *
-     * @param configService The configuration service.
-     * @param imageSenderServiceImplOfPython The EOID implementation of the image sender service.
-     * @param imageSenderServiceImplOfRoboflow The Roboflow implementation of the image sender service.
-     * @param stateMachineService The state machine service.
+     * @param configService                the configuration service for retrieving file paths and model info
+     * @param imageSenderServiceImplOfPython the Python-based implementation of image sending
+     * @param imageSenderServiceImplOfRoboflow the Roboflow-based implementation of image sending
+     * @param stateMachineService          the service for managing state machines
+     * @param roboflowWorkflowRepository   the repository for Roboflow workflow data
+     * @see ConfigService
+     * @see ImageSenderServiceImplOfPython
+     * @see ImageSenderServiceImplOfRoboflow
+     * @see StateMachineService
+     * @see RoboflowWorkflowRepository
      */
     public VideoService(ConfigService configService,
                         ImageSenderServiceImplOfPython imageSenderServiceImplOfPython,
                         ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow,
-                        StateMachineService stateMachineService, RoboflowWorkflowRepository roboflowWorkflowRepository) {
+                        StateMachineService stateMachineService,
+                        RoboflowWorkflowRepository roboflowWorkflowRepository) {
         this.configService = configService;
         this.imageSenderServiceImplOfPython = imageSenderServiceImplOfPython;
         this.imageSenderServiceImplOfRoboflow = imageSenderServiceImplOfRoboflow;
@@ -55,13 +84,25 @@ public class VideoService {
     }
 
     /**
-     * Processes an uploaded video by sending frames to the model for recognition and storing the results in the state machine.
-     * <br> The processing is done asynchronously. If no file is found for the user, an error is returned. Once processing is complete,
-     * the recognition results are returned.
+     * Processes an uploaded video by sending frames to the selected model for recognition.
+     * <br> The frames are retrieved from a temporary file maintained by the relevant {@link ImageSenderService}.
+     * <br> The results are stored as observations in the {@link StateMachine} corresponding to the given user and preset.
+     * <br>
+     * <p>
+     * The method spawns a separate thread to handle the frame-by-frame processing:
+     * <ul>
+     *     <li>The observations are stored in an {@link AtomicReference}.</li>
+     *     <li>The thread is then joined to ensure processing completes before returning.</li>
+     *     <li>The observations are attached to the user's {@link StateMachine} instance.</li>
+     * </ul>
+     * </p>
      *
-     * @param user The user identifier, used to distinguish different users' sessions or uploads.
-     * @param presetName The preset name, related to the state machine preset.
-     * @return A response entity containing the result of the video processing, or an error message if an issue occurs.
+     * @param user       the user identifier, used to distinguish different users' sessions
+     * @param presetName the preset name corresponding to the desired model/preset configuration
+     * @return a {@link ResponseEntity} containing the resulting observations or an error message in case of failure
+     * @see #buildSenderService(String)
+     * @see #buildConfig(String)
+     * @see StateMachineService#getStateMachineByName(String)
      */
     public ResponseEntity<? extends Serializable> processVideo(String user, String presetName) {
         log.info("user start to process video: {}", user);
@@ -72,37 +113,39 @@ public class VideoService {
         if (!imageSenderService.tempFiles.containsKey(user)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No file uploaded");
         }
-        Date start = new Date();
-        // Process the video frame by frame using sendFrame method
+
+        // Thread-safe container for storing the results (observations) of video processing
         AtomicReference<Map<Long, List<AbstractActionObservation>>> observations = new AtomicReference<>();
 
+        // Thread creation and start
         Thread thread = new Thread(() -> {
             try {
-                Map<Long, List<? extends AbstractActionObservation>> longListMap = imageSenderService
-                        .sendVideoFile(imageSenderService.tempFiles.get(user), user, config);
+                Map<Long, List<? extends AbstractActionObservation>> longListMap =
+                        imageSenderService.sendVideoFile(imageSenderService.tempFiles.get(user), user, config);
 
                 Map<Long, List<AbstractActionObservation>> listMap = new TreeMap<>();
-
-                longListMap.forEach((key, value) -> listMap.put(key, value
-                        .stream()
-                        .map(a -> (AbstractActionObservation) a)
-                        .toList()));
-
+                longListMap.forEach((key, value) ->
+                        listMap.put(key, value.stream().map(a -> (AbstractActionObservation) a).toList())
+                );
                 observations.set(listMap);
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+
         log.info("user start to process video- thread.start();: {}", user);
         thread.start();
+        // Keep track of the thread in case we need to interrupt processing later
         stateMachineService.addProcess(user, thread);
 
         try {
             thread.join();
-            // Return the observations from the Python server
-            if (observations.get().isEmpty()) {
+            // Return the observations from the image sender
+            if (observations.get() == null || observations.get().isEmpty()) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing video");
             }
+            // Initialize or restart the state machine and attach observations
             stateMachineService.start(user, presetName);
             stateMachineService.getStateMachineByName(user).setObservations(observations.get());
             log.info("user start to process video- return ResponseEntity.ok(observations);: {}", user);
@@ -112,16 +155,16 @@ public class VideoService {
         }
     }
 
-
-
     /**
-     * Uploads and saves a video file to the server and resets the state machine.
-     * <br> This method ensures that the uploaded file is stored in a fixed path, and the associated state machine is reset.
+     * Uploads and saves a video file to a designated path, then resets the relevant services.
+     * <br> The user's existing {@link StateMachine} (if any) is stopped, and all ongoing image-sending processes are interrupted.
+     * <br> The video file is saved under a fixed name in the configured location, using the user identifier.
      *
-     * @param videoFile The uploaded video file.
-     * @param user The user identifier.
-     * @return A response entity indicating the result of the save operation.
-     * @throws IOException If an I/O error occurs while saving or writing the file.
+     * @param videoFile the uploaded {@link MultipartFile} containing video data
+     * @param user      the user identifier
+     * @return a {@link ResponseEntity} representing the outcome of the save operation
+     * @throws IOException if an I/O error occurs during file handling
+     * @see #isValidFilename(String)
      */
     public ResponseEntity<String> uploadAndSave(MultipartFile videoFile, String user) throws IOException {
         stateMachineService.stopStateMachine(user);
@@ -133,8 +176,8 @@ public class VideoService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No file uploaded");
         }
 
-        // Define the destination file path (e.g., fixed file name or timestamped file)
-        String destinationPath = configService.getVideoPath() + File.separator + user + ".mp4";  // Fixed filename
+        // Determine the destination path for the uploaded file
+        String destinationPath = configService.getVideoPath() + File.separator + user + ".mp4";
         if (!isValidFilename(user)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid video file name");
         }
@@ -145,21 +188,21 @@ public class VideoService {
             stream.write(videoFile.getBytes());
             stream.flush();
         }
+        log.info("Saved video file to {}", destinationFile.getAbsolutePath());
 
-        // Log the file saving process
-        System.out.println("Saved video file to " + destinationFile.getAbsolutePath());
-
+        // Update references for Python-based and Roboflow-based services
         imageSenderServiceImplOfPython.tempFiles.put(user, destinationFile);
         imageSenderServiceImplOfRoboflow.tempFiles.put(user, destinationFile);
+
         return null;
     }
 
     /**
      * Validates the given filename to ensure it does not contain invalid characters or reserved names.
-     * <br> This validation is especially relevant for systems like Windows that have restrictions on file names.
+     * <br> This is important particularly on Windows-based systems with specific filename constraints.
      *
-     * @param name The filename to validate.
-     * @return {@code true} if the filename is valid; {@code false} if it contains invalid characters or reserved names.
+     * @param name the filename to validate
+     * @return {@code true} if the filename is valid, otherwise {@code false}
      */
     public static boolean isValidFilename(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -167,14 +210,14 @@ public class VideoService {
             return false;
         }
 
-        // Check for invalid characters in the filename
+        // Check for invalid characters
         String invalidChars = "[\\\\/:*?\"<>|]";
         if (name.matches(".*" + invalidChars + ".*")) {
             log.error("Invalid video file name: name contains invalid characters");
             return false;
         }
 
-        // Check for Windows reserved names
+        // Check against Windows reserved names
         String[] reservedNames = {
                 "CON", "PRN", "AUX", "NUL",
                 "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
@@ -182,23 +225,23 @@ public class VideoService {
         };
         for (String reserved : reservedNames) {
             if (name.equalsIgnoreCase(reserved)) {
-                log.error("Invalid video file name: name contains invalid characters: '" + reserved + "'");
+                log.error("Invalid video file name: name contains invalid characters: '{}'", reserved);
                 return false;
             }
         }
-
         return true;
     }
 
     /**
-     * Processes a single frame (image) from the video stream, passing it to the corresponding model for recognition
-     * and updating the state machine with the results.
-     * <br> This method is used to process individual images, sending them to the model and updating the state machine.
+     * Processes a single frame (image) from the video stream.
+     * <br> The image is passed to the configured model for recognition,
+     * and the results are integrated into the user's {@link StateMachine} based on the preset's model.
      *
-     * @param img The Base64 encoded image data.
-     * @param user The user identifier.
-     * @param timestamp The timestamp or frame identifier.
-     * @return {@code true} if the image was processed successfully; {@code false} if no image was uploaded.
+     * @param img       a Base64-encoded string representing the image data
+     * @param user      the user identifier
+     * @param timestamp the timestamp or frame identifier
+     * @return {@code true} if the image was processed successfully; {@code false} if the image data is empty
+     * @see ImageSenderService#processImg(String, String, StateMachine, Map)
      */
     public boolean processImage(String img, String user, String timestamp) {
         if (img.isEmpty()) {
@@ -210,10 +253,20 @@ public class VideoService {
         ImageSenderService imageSenderService = buildSenderService(modelWithConfig);
         Map<String, String> config = buildConfig(modelWithConfig);
 
+        // Delegate image processing to the chosen service
         imageSenderService.processImg(img, timestamp, stateMachineByName, config);
         return true;
     }
 
+    /**
+     * Builds a configuration map for the selected model.
+     * <br> If the model type is 'python', the host is used.
+     * <br> If the model type is 'roboflow', the workspace name, workflow name, and workflow ID are used.
+     *
+     * @param modelWithConfig a string denoting the model type and configuration details (e.g., "python@localhost:5000")
+     * @return a {@link Map} containing the relevant configuration
+     * @see RoboflowWorkflowRepository
+     */
     private Map<String, String> buildConfig(String modelWithConfig) {
         String[] split = modelWithConfig.split("@");
         Map<String, String> config = new HashMap<>();
@@ -222,49 +275,85 @@ public class VideoService {
         } else {
             config.put("workspace_name", split[1]);
             config.put("workflow_name", split[2]);
-            config.put("workflow_id", roboflowWorkflowRepository.findByWorkspaceNameAndWorkflowName(split[1], split[2]).getWorkflowId());
+            config.put("workflow_id",
+                    roboflowWorkflowRepository.findByWorkspaceNameAndWorkflowName(split[1], split[2])
+                            .getWorkflowId());
         }
         return config;
     }
 
+    /**
+     * Selects the appropriate {@link ImageSenderService} based on the model configuration string.
+     * <br> If 'python' is specified, {@link ImageSenderServiceImplOfPython} is used; otherwise, {@link ImageSenderServiceImplOfRoboflow}.
+     *
+     * @param modelWithConfig the configuration string (e.g., "python@localhost:5000")
+     * @return the chosen {@link ImageSenderService} implementation
+     * @see ImageSenderServiceImplOfPython
+     * @see ImageSenderServiceImplOfRoboflow
+     */
     private ImageSenderService buildSenderService(String modelWithConfig) {
         String[] split = modelWithConfig.split("@");
         return split[0].equalsIgnoreCase("python") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
     }
 
     /**
-     * Retrieves the current video processing progress (from 0 to 1).
-     * <br> This method returns the progress of the video processing, calculated as the ratio of processed frames to total frames.
+     * Retrieves the current progress (0 to 1) of video processing for the given user.
+     * <br> The progress is calculated as the ratio of processed frames to total frames.
      *
-     * @param user The user identifier.
-     * @return A double value representing the progress of the video processing (0 = not started, 1 = completed).
+     * @param user the user identifier
+     * @return a double value representing the processing progress (0 = not started, 1 = completed)
      */
     public Double getProgress(String user) {
-        ImageSenderService imageSenderService = imageSenderServiceImplOfPython.progressMap.containsKey(user) ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
-        return (double) imageSenderService.progressMap.getOrDefault(user, new HashMap<>()).size() / imageSenderService.totleFramesMap.getOrDefault(user, 1L);
+        // Determine which service is handling progress for the user
+        ImageSenderService imageSenderService =
+                imageSenderServiceImplOfPython.progressMap.containsKey(user)
+                        ? imageSenderServiceImplOfPython
+                        : imageSenderServiceImplOfRoboflow;
+
+        long processedFrames = imageSenderService.progressMap.getOrDefault(user, new HashMap<>()).size();
+        long totalFrames = imageSenderService.totleFramesMap.getOrDefault(user, 1L);
+        return (double) processedFrames / totalFrames;
     }
 
     /**
      * Returns the previously uploaded video file for download or streaming.
-     * <br> If the video file does not exist, a 404 status is returned.
+     * <br> If the file does not exist, a 404 (Not Found) response is returned.
      *
-     * @param user The user identifier.
-     * @return A response entity containing the video resource, or a 404 error if the file is not found.
-     * @throws MalformedURLException If the URL format is invalid.
+     * @param user the user identifier
+     * @return a {@link ResponseEntity} containing the video resource or a 404 error
+     * @throws MalformedURLException if the file path cannot be converted to a valid URL
      */
     public ResponseEntity<?> getFileResponse(String user) throws MalformedURLException {
-        ImageSenderService imageSenderService = imageSenderServiceImplOfPython.tempFiles.containsKey(user) ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
+        // Determine which service has the temp file for the user
+        ImageSenderService imageSenderService =
+                imageSenderServiceImplOfPython.tempFiles.containsKey(user)
+                        ? imageSenderServiceImplOfPython
+                        : imageSenderServiceImplOfRoboflow;
+
         File videoFile = imageSenderService.tempFiles.get(user);
         if (!videoFile.exists()) {
             return ResponseEntity.notFound().build();
         }
 
-        // Return the file as a resource
+        // Create a resource from the file
         Resource videoResource = new UrlResource(videoFile.getAbsoluteFile().toURI());
 
-        // Set the response headers for the video file (e.g., Content-Disposition for download)
+        // Return the file as a response entity with appropriate headers
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + videoFile.getName() + "\"")
                 .body(videoResource);
+    }
+
+    /**
+     * Retrieves the {@link ImageSenderService} being used based on the preset name.
+     * <br> This is a convenience method for external clients that need direct access to the underlying image-sending implementation.
+     *
+     * @param presetName the name of the preset
+     * @return the corresponding {@link ImageSenderService} for that preset
+     */
+    public ImageSenderService getUseImageSender(String presetName) {
+        return configService.getUseModel(presetName).startsWith("python")
+                ? imageSenderServiceImplOfPython
+                : imageSenderServiceImplOfRoboflow;
     }
 }

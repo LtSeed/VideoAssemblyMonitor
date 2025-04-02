@@ -54,6 +54,7 @@ public abstract class ImageSenderService {
      */
     public final Map<String, List<CompletableFuture<List<AbstractActionObservation>>>> sendingProcesses = new ConcurrentHashMap<>();
 
+
     /**
      * Constructor that injects the config service.
      *
@@ -61,6 +62,7 @@ public abstract class ImageSenderService {
      */
     public ImageSenderService(ConfigService configService) {
         this.configService = configService;
+
     }
 
     /**
@@ -187,4 +189,5 @@ public abstract class ImageSenderService {
         stateMachine.setObservations(observations);
         stateMachine.updateStateProbability(list, Double.parseDouble(timestamp), configService);
     }
+
 }

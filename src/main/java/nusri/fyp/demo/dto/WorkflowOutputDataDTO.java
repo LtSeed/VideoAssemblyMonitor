@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import nusri.fyp.demo.roboflow.data.entity.workflow.OutputImage;
 import nusri.fyp.demo.roboflow.data.entity.workflow.WorkflowOutputData;
-import nusri.fyp.demo.roboflow.data.response.WorkflowInferenceResponse;
 
 /**
  * DTO for output data from the workflow, including predictions, object count, and output image.

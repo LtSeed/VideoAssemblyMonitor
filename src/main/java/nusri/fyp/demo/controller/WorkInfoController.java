@@ -4,24 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.dto.Alarm;
 import nusri.fyp.demo.dto.PresetDto;
 import nusri.fyp.demo.dto.ProgressBar;
-import nusri.fyp.demo.entity.Preset;
-import nusri.fyp.demo.repository.ActionRepository;
-import nusri.fyp.demo.repository.ObjectRepository;
-import nusri.fyp.demo.repository.PresetRepository;
 import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
 import nusri.fyp.demo.service.ConfigService;
-import nusri.fyp.demo.service.img_sender.ImageSenderService;
+import nusri.fyp.demo.service.VideoService;
 import nusri.fyp.demo.service.StateMachineService;
-import nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfPython;
-import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderServiceImplOfRoboflow;
-import nusri.fyp.demo.state_machine.AbstractActionObservation;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Controller for handling work-related information, including fetching progress, predictions, alarms,
@@ -33,13 +23,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WorkInfoController {
 
-    private final PresetRepository presetRepository;
     private final ConfigService configService;
     private final StateMachineService stateMachineService;
-    private final ImageSenderServiceImplOfPython imageSenderServiceImplOfPython;
-    private final ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow;
-    private final ActionRepository actionRepository;
-    private final ObjectRepository objectRepository;
+    private final VideoService videoService;
 
     /**
      * Endpoint to get the progress of a work session.
@@ -53,7 +39,7 @@ public class WorkInfoController {
     @GetMapping("/progress")
     public List<ProgressBar> getProgress(@RequestParam String name, @RequestParam double timestamp) {
         if (timestamp != -1)
-            stateMachineService.getStateMachineByName(name).clearAndUpdateToTime(timestamp, configService, actionRepository.getAllActions(), objectRepository.getAllObjects());
+            stateMachineService.clearAndUpdateToTime(name, timestamp);
         return stateMachineService.getProgressBars(name);
     }
 
@@ -66,26 +52,9 @@ public class WorkInfoController {
      */
     @GetMapping("/predictions")
     public Map<Long, List<SinglePrediction>> getPredictions(@RequestParam String name) {
-        Map<Long, List<AbstractActionObservation>> observations =
-                stateMachineService.getStateMachineByName(name).getObservations();
-
-        if (observations == null) {
-            return Collections.emptyMap();
-        }
-        boolean allSinglePredictions = observations.values().stream()
-                .flatMap(List::stream)
-                .allMatch(o -> o instanceof SinglePrediction);
-        if (!allSinglePredictions) {
-            return Collections.emptyMap();
-        }
-        return observations.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().stream()
-                                .map(o -> (SinglePrediction) o) // Cast as SinglePrediction, confirmed via instanceof check
-                                .collect(Collectors.toList())
-                ));
+        return stateMachineService.getPredictions(name);
     }
+
 
     /**
      * Endpoint to get the alarms associated with a specific work session.
@@ -109,19 +78,13 @@ public class WorkInfoController {
      * @return A response indicating whether the session was successfully started or if an error occurred.
      */
     @PostMapping("/start")
-    public ResponseEntity<?> getAlarms(@RequestParam String user, @RequestParam String preset) {
-        stateMachineService.stopStateMachine(user);
-        String s = configService.getUseModel(preset);
-        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
-        imageSenderService.interrupt(user);
-        List<Preset> byId = presetRepository.findPresetByName(preset);
-        if (!byId.isEmpty()) {
-            stateMachineService.start(user, byId.get(0));
-        } else {
-            return new ResponseEntity<>("Preset not found", HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<?> start(@RequestParam String user, @RequestParam String preset) {
+        ResponseEntity<String> NOT_FOUND = stateMachineService.getStartResponse(user, preset);
+        if (NOT_FOUND != null) return NOT_FOUND;
         return ResponseEntity.ok().build();
     }
+
+
 
     /**
      * Endpoint to interrupt a specific work session.
@@ -133,8 +96,7 @@ public class WorkInfoController {
     public void interruptStateMachine(@RequestParam String user) {
         String s = configService.getUseModel(stateMachineService.getStateMachineByName(user).getPreset().getName());
         stateMachineService.stopAndLogStateMachine(user);
-        ImageSenderService imageSenderService = s.equalsIgnoreCase("eoid") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
-        imageSenderService.interrupt(user);
+        videoService.getUseImageSender(s).interrupt(user);
     }
 
     /**
@@ -164,26 +126,13 @@ public class WorkInfoController {
      * Constructs a {@link WorkInfoController} with the required services and repositories.
      *
      * @param stateMachineService The state machine service.
-     * @param presetRepository The preset repository.
      * @param configService The configuration service.
-     * @param imageSenderServiceImplOfPython The EOID implementation of the image sender service.
-     * @param imageSenderServiceImplOfRoboflow The Roboflow implementation of the image sender service.
-     * @param actionRepository The action repository.
-     * @param objectRepository The object repository.
      */
     WorkInfoController(StateMachineService stateMachineService,
-                       PresetRepository presetRepository,
                        ConfigService configService,
-                       ImageSenderServiceImplOfPython imageSenderServiceImplOfPython,
-                       ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow,
-                       ActionRepository actionRepository,
-                       ObjectRepository objectRepository) {
+                       VideoService videoService) {
         this.stateMachineService = stateMachineService;
-        this.presetRepository = presetRepository;
         this.configService = configService;
-        this.imageSenderServiceImplOfPython = imageSenderServiceImplOfPython;
-        this.imageSenderServiceImplOfRoboflow = imageSenderServiceImplOfRoboflow;
-        this.actionRepository = actionRepository;
-        this.objectRepository = objectRepository;
+        this.videoService = videoService;
     }
 }

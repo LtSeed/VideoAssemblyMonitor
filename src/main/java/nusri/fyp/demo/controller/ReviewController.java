@@ -6,9 +6,6 @@ import nusri.fyp.demo.dto.StateMachineLogDto;
 import nusri.fyp.demo.dto.StepStatsDto;
 import nusri.fyp.demo.entity.StateMachineLog;
 import nusri.fyp.demo.entity.PresetNode;
-import nusri.fyp.demo.repository.ActionRepository;
-import nusri.fyp.demo.repository.ObjectRepository;
-import nusri.fyp.demo.repository.StateMachineLogRepository;
 import nusri.fyp.demo.service.ConfigService;
 import nusri.fyp.demo.service.ReviewService;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,7 +24,6 @@ import java.util.*;
 @RequestMapping("/review")
 public class ReviewController {
 
-    private final StateMachineLogRepository stateMachineLogRepository;
     private final ReviewService reviewService;
     private final ConfigService configService;
 
@@ -41,7 +37,7 @@ public class ReviewController {
      */
     @GetMapping("/state-machine-logs")
     public List<StateMachineLogDto> getAllStateMachineLogs() {
-        return stateMachineLogRepository.findAll().stream().map(StateMachineLogDto::new).toList();
+        return reviewService.getAllStateMachineLogs();
     }
 
     /**
@@ -124,12 +120,10 @@ public class ReviewController {
     /**
      * Constructs the {@link ReviewController} with the required services and repositories.
      *
-     * @param stateMachineLogRepository The repository for state machine logs.
      * @param reviewService The service for handling review operations.
      * @param configService The configuration service.
      */
-    ReviewController(StateMachineLogRepository stateMachineLogRepository, ReviewService reviewService, ConfigService configService) {
-        this.stateMachineLogRepository = stateMachineLogRepository;
+    ReviewController(ReviewService reviewService, ConfigService configService) {
         this.reviewService = reviewService;
         this.configService = configService;
 
