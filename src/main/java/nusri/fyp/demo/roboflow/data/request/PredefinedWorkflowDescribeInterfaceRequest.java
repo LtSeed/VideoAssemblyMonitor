@@ -8,6 +8,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents a request to describe the interface of a predefined workflow.
  * <br> This class is used to send a request to the Roboflow API to retrieve information about the interface of a predefined workflow,
  * which may include inputs, outputs, and other relevant details about how the workflow can be interacted with.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

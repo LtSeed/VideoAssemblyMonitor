@@ -10,6 +10,9 @@ import java.util.List;
  * Represents a face detection prediction in an image or video frame.
  * <br> This class holds the data related to a face detected in an image, such as the bounding box coordinates,
  * confidence score, and additional properties like class name and landmarks.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class FaceDetectionPrediction {

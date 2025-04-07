@@ -37,7 +37,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * <br> - {@link StateMachineService} for integrating recognition results into the state machine.
  * <br> - {@link RoboflowWorkflowRepository} for retrieving workflow IDs in a Roboflow environment.
  * </p>
- *
+ * @author Liu Binghong
+ * @since 1.0
  * @see ConfigService
  * @see StateMachineService
  * @see ImageSenderService
@@ -88,14 +89,12 @@ public class VideoService {
      * <br> The frames are retrieved from a temporary file maintained by the relevant {@link ImageSenderService}.
      * <br> The results are stored as observations in the {@link StateMachine} corresponding to the given user and preset.
      * <br>
-     * <p>
      * The method spawns a separate thread to handle the frame-by-frame processing:
      * <ul>
      *     <li>The observations are stored in an {@link AtomicReference}.</li>
      *     <li>The thread is then joined to ensure processing completes before returning.</li>
      *     <li>The observations are attached to the user's {@link StateMachine} instance.</li>
      * </ul>
-     * </p>
      *
      * @param user       the user identifier, used to distinguish different users' sessions
      * @param presetName the preset name corresponding to the desired model/preset configuration

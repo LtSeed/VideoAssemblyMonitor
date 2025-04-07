@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 /**
  * Configuration class for setting up Roboflow integration.
  * <br> This class configures the Jackson {@link ObjectMapper} with custom serializers and deserializers for {@link AnyData}.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Component
 public class RoboflowConfig {

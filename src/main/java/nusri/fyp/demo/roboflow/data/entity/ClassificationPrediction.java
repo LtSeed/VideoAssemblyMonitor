@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents a classification prediction.
  * <br> This class is used to hold the prediction results for classification tasks,
  * where an image or object is assigned to a particular class along with its associated confidence score.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ClassificationPrediction {

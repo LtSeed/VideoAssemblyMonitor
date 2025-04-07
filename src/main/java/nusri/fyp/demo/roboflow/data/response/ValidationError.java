@@ -9,6 +9,9 @@ import java.util.List;
 /**
  * Represents a validation error returned by the Roboflow API.
  * <br> This class contains information about the location of the error, the error message, and the type of error.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ValidationError implements RoboflowResponseData {

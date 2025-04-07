@@ -19,7 +19,10 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of the {@link RequestSender} interface using the {@link HttpClient} for sending HTTP requests asynchronously.
  * <br> This class handles both POST and GET requests to the Roboflow API and processes the responses using {@link CompletableFuture}.
  * <br> It is deprecated in favor of a newer, more efficient HTTP client implementation.
- * @deprecated Can not run test.
+ * @deprecated Can not pass test.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Component
 @Deprecated

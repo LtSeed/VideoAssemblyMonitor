@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for DocTR OCR inference in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform OCR (Optical Character Recognition) inference using the DocTR model.
  * The request processes images to extract textual information.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

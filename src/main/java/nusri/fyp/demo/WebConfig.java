@@ -7,6 +7,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * Configuration class for enabling Cross-Origin Resource Sharing (CORS) in the Spring application.
  * <br> This class allows the backend to specify which frontend origins can access the API.
+ * @author Liu Binghong
+ * @since 1.0
  */
 @SuppressWarnings("HttpUrlsUsage")
 @Configuration

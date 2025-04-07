@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * Represents the response for a classification inference request to the Roboflow API.
  * <br> This class contains the data returned by the API after performing classification inference on an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ClassificationInferenceResponse implements RoboflowResponseData {

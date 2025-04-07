@@ -11,6 +11,9 @@ import java.util.List;
  * Request object for performing keypoints detection inference.
  * <br> This class represents a request to perform keypoints detection inference using the Roboflow API.
  * Keypoints detection involves identifying specific points (such as joints in a human body or key parts of objects) in an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
  * gather statistics on state machine execution logs.
  * <br> This service handles operations like filtering logs, calculating step durations, and
  * generating statistics based on preset configurations.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Slf4j
 @Service

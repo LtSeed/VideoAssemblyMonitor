@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for object detection inference in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform object detection inference,
  * which involves detecting objects of specific classes within an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

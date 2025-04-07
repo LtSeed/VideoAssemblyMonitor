@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * Represents a description of blocks within workflows in the Roboflow API.
  * <br> This class provides detailed information about the blocks, their connections, and the associated properties and schema.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class WorkflowsBlocksDescription implements RoboflowResponseData {

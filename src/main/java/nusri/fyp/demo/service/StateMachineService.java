@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
  *   <li>Caches the results of {@link Preset} retrieval in {@link #presetsCache} for performance.</li>
  * </ul>
  *
+ * @author Liu Binghong
+ * @since 1.0
  * @see StateMachine
  * @see PresetRepository
  * @see Preset

@@ -8,6 +8,9 @@ import java.util.List;
  * Represents an instance segmentation prediction.
  * <br> This class is used to store the prediction results of an instance segmentation task.
  * It includes the bounding box coordinates, confidence scores, class information, and associated points for the detected instance.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class InstanceSegmentationPrediction {

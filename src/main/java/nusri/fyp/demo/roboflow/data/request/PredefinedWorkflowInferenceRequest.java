@@ -13,6 +13,9 @@ import java.util.Map;
  * Represents a request for inference using a predefined workflow.
  * <br> This class is used to send a request to the Roboflow API to perform inference using a predefined workflow.
  * The request includes necessary inputs, parameters, and configuration options for the inference process.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -54,6 +57,10 @@ public class PredefinedWorkflowInferenceRequest extends RoboflowRequestData {
      */
     private boolean useCache;
 
+    /**
+     * Add an image ({@link InferenceRequestImage}) to the inputs.
+     * @param image the image to add.
+     */
     public void addImage(InferenceRequestImage image) {
         inputs.put("image", image);
     }

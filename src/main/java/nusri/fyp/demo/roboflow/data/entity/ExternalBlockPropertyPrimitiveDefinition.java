@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents the definition of an external block property primitive.
  * <br> An external block property primitive defines a property associated with a block, such as its type, name,
  * and description. These properties are used to configure or interact with blocks in a workflow.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ExternalBlockPropertyPrimitiveDefinition {

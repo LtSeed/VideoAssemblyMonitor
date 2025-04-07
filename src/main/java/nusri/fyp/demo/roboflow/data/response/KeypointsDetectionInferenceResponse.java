@@ -11,6 +11,9 @@ import java.util.List;
  * Represents the response for keypoints detection inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing keypoints detection inference on an image.
  * <br> The response includes the visualization, inference metadata, and a list of keypoints predictions.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class KeypointsDetectionInferenceResponse implements RoboflowResponseData {

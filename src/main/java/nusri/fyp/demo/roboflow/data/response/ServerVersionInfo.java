@@ -6,6 +6,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowResponseData;
 /**
  * Represents the version information of the server in the Roboflow API.
  * <br> This class contains details about the server's name, version, and unique identifier (UUID).
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ServerVersionInfo implements RoboflowResponseData {

@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents a bounding box in a 2D space.
  * <br> This class is typically used to describe the coordinates and dimensions of a rectangular area within an image,
  * such as the bounding box around a detected object in an object detection task.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class Box {

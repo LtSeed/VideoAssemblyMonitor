@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
  * Represents a classification inference request in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform classification inference on an image,
  * providing necessary parameters such as model ID, input image, preprocessing options, and more.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

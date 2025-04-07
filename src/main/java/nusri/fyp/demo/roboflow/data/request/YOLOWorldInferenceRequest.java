@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for YOLO world inference.
  * <br> This request triggers the inference process using the YOLO (You Only Look Once) model for object detection
  * and classification on a provided image with optional text inputs.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

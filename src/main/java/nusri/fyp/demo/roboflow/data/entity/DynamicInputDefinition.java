@@ -7,6 +7,9 @@ import java.util.List;
  * Represents the definition of a dynamic input.
  * <br> A dynamic input is a configurable parameter for a dynamic block, specifying how input data
  * should be provided or processed within a workflow.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class DynamicInputDefinition {

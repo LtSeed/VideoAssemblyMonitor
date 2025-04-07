@@ -8,6 +8,9 @@ import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
 /**
  * Represents a request for a SAM (Segment Anything Model) embedding.
  * <br> This request is used to send an image to the SAM model for embedding. The request includes parameters like image data, model configurations, and other related settings for the embedding process.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

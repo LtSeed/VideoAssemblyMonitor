@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents the definition of an external workflows block selector.
  * <br> This class describes a selector used in external workflow blocks, including information about its
  * manifest type, property name, compatibility with other elements, and its type (list or dictionary element).
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ExternalWorkflowsBlockSelectorDefinition {

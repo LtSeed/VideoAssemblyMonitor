@@ -7,6 +7,9 @@ import nusri.fyp.demo.roboflow.data.AnyData;
  * Description of a processing block within a workflow.
  * <br> This class provides metadata about a processing block, including its schema, input/output characteristics,
  * and various properties that define how it behaves within a larger workflow system.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class BlockDescription {

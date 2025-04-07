@@ -9,6 +9,9 @@ import java.util.ArrayList;
  * <br> This class is primarily used to handle an array of request data in Roboflow API requests.
  *
  * @param <T> The type of data contained in this array.
+ *
+ *           @author Liu Binghong
+ * @since 1.0
  */
 public class RoboflowRequestDataArray<T> extends ArrayList<T> implements RoboflowResponseData {
     // No additional functionality needed for this class, as it extends ArrayList and holds generic data.

@@ -11,6 +11,9 @@ import java.util.List;
 /**
  * Represents the response for a workflow inference in the Roboflow API.
  * <br> This class contains the outputs from the workflow inference and additional profiler trace data.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class WorkflowInferenceResponse implements RoboflowResponseData {

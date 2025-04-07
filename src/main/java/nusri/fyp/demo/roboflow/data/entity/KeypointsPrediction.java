@@ -6,6 +6,9 @@ import java.util.List;
 /**
  * Prediction details for detected keypoints, including bounding box, confidence, and individual keypoints.
  * <br> This class is used in tasks where the goal is to detect multiple keypoints in an image, such as human pose estimation or object keypoint detection.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class KeypointsPrediction {

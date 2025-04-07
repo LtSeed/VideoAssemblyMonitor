@@ -12,6 +12,9 @@ import java.util.List;
  * <br> This class is used to send a request to the Roboflow API to perform zero-shot object detection
  * using the Grounding DINO model, which predicts bounding boxes and associated labels without needing
  * task-specific training data.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

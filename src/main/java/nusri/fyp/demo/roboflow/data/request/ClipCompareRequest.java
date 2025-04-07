@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents a request for CLIP comparison in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform CLIP (Contrastive Language-Image Pretraining) comparison,
  * which compares an image with a prompt to find the most similar matches.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

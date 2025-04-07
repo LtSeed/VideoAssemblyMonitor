@@ -6,6 +6,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowResponseData;
 /**
  * Represents a stub response in the Roboflow API.
  * <br> This class contains data for a mock or placeholder response, typically used in scenarios where a response is required but no actual inference is performed.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class StubResponse implements RoboflowResponseData {

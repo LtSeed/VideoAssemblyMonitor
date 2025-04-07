@@ -10,6 +10,9 @@ import java.util.List;
  * Represents the response for SAM2 (Segmentation and Masking) segmentation inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing SAM2 segmentation on an image.
  * <br> The response includes a list of segmentation predictions and the time taken for the inference.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class Sam2SegmentationResponse implements RoboflowResponseData {

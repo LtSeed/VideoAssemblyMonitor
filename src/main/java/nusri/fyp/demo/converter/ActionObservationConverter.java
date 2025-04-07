@@ -55,7 +55,6 @@ public class ActionObservationConverter implements AttributeConverter<Map<Long, 
         if (s == null) {
             return "null";
         }
-        // 简化做法: 只转义双引号和反斜线
         return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
@@ -114,7 +113,7 @@ public class ActionObservationConverter implements AttributeConverter<Map<Long, 
                 sb.append("{");
 
                 sb.append("\"@type\":\"")
-                        .append(getTypeName(obs)) // 一个方法，根据子类决定写什么
+                        .append(getTypeName(obs))
                         .append("\",");
 
                 sb.append("\"probability\":")

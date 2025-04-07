@@ -7,6 +7,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowResponseData;
 /**
  * Represents the response for a CLIP comparison request to the Roboflow API.
  * <br> This class contains the data returned by the API after performing a CLIP (Contrastive Language-Image Pretraining) comparison.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ClipCompareResponse implements RoboflowResponseData {

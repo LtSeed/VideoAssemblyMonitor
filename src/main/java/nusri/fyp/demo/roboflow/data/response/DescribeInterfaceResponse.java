@@ -11,6 +11,9 @@ import java.util.Map;
  * Represents the response for describing an interface in the Roboflow API.
  * <br> This class contains the data returned by the API when querying for details about an interface,
  * including input parameters, output data, typing hints, and schema information.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class DescribeInterfaceResponse implements RoboflowResponseData {

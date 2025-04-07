@@ -6,6 +6,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowResponseData;
 /**
  * Represents the status of a workflow validation in the Roboflow API.
  * <br> This class provides the status of the workflow validation process, indicating whether the workflow is valid or not.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class WorkflowValidationStatus implements RoboflowResponseData {

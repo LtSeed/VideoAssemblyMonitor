@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * Represents a request for SAM (Segment Anything Model) segmentation.
  * <br> This request is used to perform segmentation on an image using the SAM model. The request includes parameters such as image data, model configurations, embeddings, and mask information.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

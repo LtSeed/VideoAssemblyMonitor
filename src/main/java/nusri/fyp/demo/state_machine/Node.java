@@ -15,6 +15,8 @@ import static java.lang.Math.min;
 /**
  * Represents a node in a state machine process.
  * <br> This class handles the management of a node's actions, probabilities, and quotas, as well as interactions with parent nodes.
+ * @author Liu Binghong
+ * @since 1.0
  */
 public class Node {
     /**

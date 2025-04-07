@@ -16,10 +16,7 @@ import nusri.fyp.demo.state_machine.ActionObservation;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -29,27 +26,65 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Implementation of {@link ImageSenderService} for sending image frames to a backend Python server (EOID) for inference.
- * <br> This class encapsulates logic to send frames to the backend Python server via a load balancer service,
- * process the results, and return action observations.
+ * <b>Implementation of {@link ImageSenderService} for sending image frames to a backend Python server (EOID) for inference.</b>
+ * <br>
+ * <p>This class provides methods to:</p>
+ * <ul>
+ *   <li>Send frames (OpenCV {@link Mat} or Base64-encoded) synchronously for immediate inference results.</li>
+ *   <li>Send frames asynchronously via {@link CompletableFuture} for concurrent processing.</li>
+ *   <li>Interrupt and cancel ongoing processes associated with a given user.</li>
+ * </ul>
+ * <br>
+ * <p>Core logic includes:</p>
+ * <ul>
+ *   <li>Acquiring the "best" Python instance (least loaded) through {@link PythonServerLoadBalancer}.</li>
+ *   <li>Sending frames (as PNG byte arrays) via HTTP to the chosen Python instance.</li>
+ *   <li>Deserializing the JSON response into a list of {@link ActionObservation} objects.</li>
+ * </ul>
  *
+ * @author Liu Binghong
+ * @since 1.0
+ * @see PythonServerLoadBalancer
+ * @see ConfigService
+ * @see ImageSenderService
+ * @see AbstractActionObservation
+ * @see ActionObservation
  */
 @Slf4j
 @Service
 public class ImageSenderServiceImplOfPython extends ImageSenderService {
 
     /**
-     * Flag to indicate whether the Python server should be used for inference.
+     * Flag indicating whether the Python server should be used for inference.
+     * <br> Set this to false if you want to disable Python-based inference.
      */
     public static final boolean USE_PYTHON = true;
+
     private final ObjectMapper objectMapper;
 
+    /**
+     * A map of {@link PythonServerLoadBalancer} instances, keyed by their host+port strings.
+     */
     private final Map<String, PythonServerLoadBalancer> loadBalancers;
 
-    ImageSenderServiceImplOfPython(ConfigService configService, ObjectMapper objectMapper, PythonServerRepository pythonServerRepository) {
+    /**
+     * Constructs this service, initializing load balancers from entries in the {@link PythonServerRepository}.
+     * <br>
+     * Each record in the repository provides a host/port, and a corresponding {@link PythonServerLoadBalancer} is created.
+     *
+     * @param configService the configuration service for retrieving necessary settings
+     * @param objectMapper  the Jackson {@link ObjectMapper} for JSON parsing
+     * @param pythonServerRepository the repository that holds Python server info (host, port, etc.)
+     * @see PythonServerRepository
+     */
+    public ImageSenderServiceImplOfPython(ConfigService configService,
+                                          ObjectMapper objectMapper,
+                                          PythonServerRepository pythonServerRepository) {
         super(configService);
         this.objectMapper = objectMapper;
         this.loadBalancers = new HashMap<>();
+
+        // Initialize load balancers for each server in the repository
         pythonServerRepository.findAll().forEach(pythonServer -> {
             String port = pythonServer.getPort();
             String host = pythonServer.getHost();
@@ -58,82 +93,100 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
     }
 
     /**
-     * Synchronously sends an image frame (in OpenCV Mat format) to the backend Python server and returns the action observations.
+     * Sends an OpenCV {@link Mat} frame synchronously to a Python server for inference.
+     * <br> Converts the frame to a PNG byte array internally before sending.
      *
-     * @param frame The image frame to be processed (OpenCV Mat format).
-     * @return A list of {@link ActionObservation} representing the predictions made by the Python server.
+     * @param frame  the OpenCV Mat image frame
+     * @param config a map containing configuration details (e.g., "host", "port")
+     * @return a list of {@link ActionObservation} representing the predictions from the Python server
      */
     @Override
     public List<ActionObservation> sendFrame(Mat frame, Map<String, String> config) {
         String host = config.getOrDefault("host", "http://localhost");
         String port = config.getOrDefault("port", "5000");
         PythonServerLoadBalancer loadBalancer = loadBalancers.get(host + ":" + port);
+
         byte[] frameBytes = matToByteArray(frame);
         return sendByteArray(frameBytes, loadBalancer);
     }
 
     /**
-     * Synchronously sends an image (Base64 encoded) to the backend Python server and returns the action observations.
+     * Sends a Base64-encoded image string synchronously to a Python server for inference.
      *
-     * @param frame The Base64 encoded image to be processed.
-     * @return A list of {@link ActionObservation} representing the predictions made by the Python server.
+     * @param frame  a Base64-encoded image string
+     * @param config a map containing configuration details (e.g., "host", "port")
+     * @return a list of {@link ActionObservation} representing the predictions from the Python server
      */
     @Override
     public List<ActionObservation> sendFrame(String frame, Map<String, String> config) {
         String host = config.getOrDefault("host", "http://localhost");
         String port = config.getOrDefault("port", "5000");
         PythonServerLoadBalancer loadBalancer = loadBalancers.get(host + ":" + port);
-        return sendByteArray(Base64.getDecoder().decode(frame), loadBalancer);
+
+        byte[] decodedBytes = Base64.getDecoder().decode(frame);
+        return sendByteArray(decodedBytes, loadBalancer);
     }
 
     /**
-     * Asynchronously sends an image frame to the backend Python server to obtain the recognition results.
-     * <br> This method returns a {@link CompletableFuture} that will contain the action observations once the task is completed.
+     * Sends an OpenCV {@link Mat} frame asynchronously to a Python server for inference.
+     * <br> The result is returned via a {@link CompletableFuture} of {@link AbstractActionObservation}.
      *
-     * @param frame The image frame to be processed (OpenCV Mat format).
-     * @param user The user identifier to associate the task with a specific user.
-     * @return A {@link CompletableFuture} containing a list of {@link AbstractActionObservation} representing the predictions.
+     * @param frame the OpenCV Mat image frame
+     * @param user  the user identifier (to correlate tasks and allow interruption)
+     * @param config a map containing configuration details (e.g., "host", "port")
+     * @return a {@link CompletableFuture} containing a list of {@link AbstractActionObservation}
+     * @see #interruptSendingProcesses(String)
      */
     @Override
     public CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user, Map<String, String> config) {
         String host = config.getOrDefault("host", "http://localhost");
         String port = config.getOrDefault("port", "5000");
         PythonServerLoadBalancer loadBalancer = loadBalancers.get(host + ":" + port);
-        // Create a CompletableFuture to execute the logic asynchronously
-        CompletableFuture<List<AbstractActionObservation>> listCompletableFuture = CompletableFuture.supplyAsync(() -> {
+
+        CompletableFuture<List<AbstractActionObservation>> futureResult = CompletableFuture.supplyAsync(() -> {
             try {
-                byte[] frameBytes = matToByteArray(frame);  // Convert frame to byte array
-                return sendByteArray(frameBytes, loadBalancer).stream().map(o -> (AbstractActionObservation) o).toList();  // Send byte array and get the result
-            } catch (CompletionException | CancellationException c) {
-                log.info("task was cancelled by user");
+                byte[] frameBytes = matToByteArray(frame);
+                // Convert List<ActionObservation> -> List<AbstractActionObservation>
+                return sendByteArray(frameBytes, loadBalancer).stream().map(o -> (AbstractActionObservation) o).toList();
+            } catch (CompletionException | CancellationException e) {
+                log.info("Task was cancelled by user");
                 return new ArrayList<>();
             }
         });
-        List<CompletableFuture<List<AbstractActionObservation>>> orDefault = sendingProcesses.getOrDefault(user, new ArrayList<>());
-        orDefault.add(listCompletableFuture);
-        sendingProcesses.put(user, orDefault);
-        return listCompletableFuture;
+
+        // Track this future in the map for possible interruption later
+        List<CompletableFuture<List<AbstractActionObservation>>> userFutures =
+                sendingProcesses.getOrDefault(user, new ArrayList<>());
+        userFutures.add(futureResult);
+        sendingProcesses.put(user, userFutures);
+
+        return futureResult;
     }
 
     /**
-     * Interrupts all ongoing and pending asynchronous tasks for the specified user.
+     * Cancels all running or pending {@link CompletableFuture} tasks associated with the specified user.
+     * <br> Useful for stopping video processing or image processing if the user ends their session.
      *
-     * @param user The user identifier whose tasks need to be interrupted.
+     * @param user the user identifier
      */
     public void interruptSendingProcesses(String user) {
-        if (!sendingProcesses.containsKey(user)) { return; }
-        List<CompletableFuture<List<AbstractActionObservation>>> completableFutures = sendingProcesses.get(user);
+        if (!sendingProcesses.containsKey(user)) {
+            return;
+        }
+        List<CompletableFuture<List<AbstractActionObservation>>> futures = sendingProcesses.get(user);
         try {
-            completableFutures.forEach(o -> o.cancel(true));
+            futures.forEach(future -> future.cancel(true));
         } catch (Exception ignored) {
+            // Nothing special to handle; the futures are being canceled
         }
     }
 
     /**
-     * Interrupts the ongoing recognition process for the specified user and cleans up related data,
-     * such as frame information and cached temporary files.
+     * Interrupts (cancels) the entire ongoing inference process for a specific user,
+     * including removing stored frames, progress info, and any pending tasks.
      *
-     * @param user The user identifier whose recognition process is to be interrupted.
+     * @param user the user identifier
+     * @see #interruptSendingProcesses(String)
      */
     @Override
     public void interrupt(String user) {
@@ -141,13 +194,17 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
         totleFramesMap.remove(user);
         progressMap.remove(user);
         sendingProcesses.remove(user);
+
+        // Delete the temporary video file if present
         if (tempFiles.containsKey(user)) {
             File file = tempFiles.get(user);
             new Thread(() -> {
                 int cnt = 0;
                 while (!file.delete()) {
                     cnt++;
-                    if (cnt == 5) { break; }
+                    if (cnt == 5) {
+                        break;
+                    }
                 }
                 tempFiles.remove(user);
             }).start();
@@ -155,25 +212,27 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
     }
 
     /**
-     * Converts an OpenCV Mat image to a PNG-encoded byte array.
+     * Converts an OpenCV {@link Mat} object to a PNG-encoded byte array.
      *
-     * @param mat The OpenCV Mat image to be converted.
-     * @return A byte array containing the PNG-encoded image.
+     * @param mat the OpenCV Mat image
+     * @return a PNG-encoded byte array
      */
     private byte[] matToByteArray(Mat mat) {
         MatOfByte buf = new MatOfByte();
         if (!Imgcodecs.imencode(".png", mat, buf)) {
-            System.out.println("Error occurred when converting Mat to byte array");
+            log.warn("Error occurred when converting Mat to byte array");
         }
-
         return buf.toArray();
     }
 
     /**
-     * Sends an image byte array to the best Python instance for processing and returns a list of action observations.
+     * Sends a byte array (PNG-encoded image) to the selected Python server instance and processes the response into
+     * {@link ActionObservation} objects.
      *
-     * @param frameBytes The byte array representing the image (e.g., PNG encoded)
-     * @return A list of {@link ActionObservation} representing the predictions made by the Python server
+     * @param frameBytes a PNG-encoded byte array
+     * @param balancer   the {@link PythonServerLoadBalancer} to select the best instance for load balancing
+     * @return a list of {@link ActionObservation} returned by the Python server
+     * @see PythonServerLoadBalancer#getBestInstance()
      */
     public List<ActionObservation> sendByteArray(byte[] frameBytes, PythonServerLoadBalancer balancer) {
         balancer.resetUnusedTime();
@@ -185,34 +244,47 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
 
         try {
             log.info("Sending image to {}", bestInstanceUrl);
-            final RestTemplate restTemplate = new RestTemplate();
+            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.postForEntity(
-                    bestInstanceUrl + "/process_image", requestEntity, String.class
+                    bestInstanceUrl + "/process_image",
+                    requestEntity,
+                    String.class
             );
+
             if (response.getBody() != null) {
-                return objectMapper.readValue(response.getBody().replace("'",""), ImageProcessResult.class).getActionObservations();
+                // Clean up single quotes, if any, and parse the JSON
+                String responseBody = response.getBody().replace("'", "");
+                return objectMapper.readValue(responseBody, ImageProcessResult.class).getActionObservations();
             }
         } catch (RestClientException e) {
-            System.out.println("Error processing image on best instance: " + e.getMessage());
+            log.warn("Error processing image on best instance: {}", e.getMessage());
         } catch (JsonMappingException e) {
-            log.info("Error processing image on best instance: {}", e.getMessage());
+            log.warn("Error mapping JSON response: {}", e.getMessage());
         } catch (JsonProcessingException e) {
-            log.error("Error processing image on best instance: {}", e.getMessage());
+            log.error("Error processing JSON response: {}", e.getMessage());
         }
 
         return new ArrayList<>();
     }
 
-
     /**
-     * Inner class used to parse the recognition results returned by the Python server.
+     * <b>Internal helper class</b> used to parse the recognition results returned by the Python server.
+     * <br> Contains a list of {@link ActionObservation} and a timestamp {@code t}.
      */
     @Getter
     @Setter
     @NoArgsConstructor
     static class ImageProcessResult {
+
+        /**
+         * The list of recognized actions from the Python server.
+         */
         @JsonProperty("actionObservations")
-        List<ActionObservation> actionObservations = new ArrayList<>();
-        Long t;
+        private List<ActionObservation> actionObservations = new ArrayList<>();
+
+        /**
+         * A timestamp (optional), indicating when the inference occurred.
+         */
+        private Long t;
     }
 }

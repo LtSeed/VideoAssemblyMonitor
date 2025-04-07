@@ -10,6 +10,9 @@ import java.util.List;
  * Represents the response for gaze detection inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing gaze detection inference.
  * <br> The response includes the predictions made by the model and the time taken to perform the inference.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class GazeDetectionInferenceResponse implements RoboflowResponseData {

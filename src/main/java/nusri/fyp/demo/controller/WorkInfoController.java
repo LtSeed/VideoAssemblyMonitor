@@ -127,6 +127,7 @@ public class WorkInfoController {
      *
      * @param stateMachineService The state machine service.
      * @param configService The configuration service.
+     * @param videoService  The video service.
      */
     WorkInfoController(StateMachineService stateMachineService,
                        ConfigService configService,

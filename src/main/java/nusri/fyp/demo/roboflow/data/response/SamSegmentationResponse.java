@@ -9,6 +9,9 @@ import java.util.List;
  * Represents the response for SAM (Segmentation and Masking) segmentation in the Roboflow API.
  * <br> This class contains the data returned by the API after performing SAM segmentation on an image.
  * <br> The response includes the segmentation masks and the time taken for the segmentation process.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class SamSegmentationResponse implements RoboflowResponseData {

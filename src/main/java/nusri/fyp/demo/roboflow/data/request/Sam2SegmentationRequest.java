@@ -12,6 +12,9 @@ import java.util.List;
  * Represents a request to perform segmentation using the SAM2 (Segment Anything Model) model.
  * <br> This request is used to send an image for segmentation using the SAM2 model. The request can include prompts,
  * configuration options for image format, and cache settings, among other parameters.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

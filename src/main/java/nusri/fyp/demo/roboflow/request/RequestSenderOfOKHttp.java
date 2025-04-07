@@ -20,12 +20,15 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@link RequestSender} interface using {@link OkHttpClient} for asynchronous HTTP requests.
  * <br> This class is responsible for sending POST and GET requests to the Roboflow API using the OkHttp client.
  * It processes responses and provides them asynchronously using {@link CompletableFuture}.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Component
 public class RequestSenderOfOKHttp implements RequestSender {
 
     private static final OkHttpClient httpClient = new OkHttpClient();
-    final ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
     /**
      * Constructor that initializes the {@link ObjectMapper} for serializing and deserializing request and response bodies.

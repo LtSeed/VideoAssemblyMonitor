@@ -12,6 +12,8 @@ import java.lang.management.*;
 /**
  * Service class for fetching system-level and JVM-level resource information, including CPU, memory, and thread statistics.
  * <br> This service interacts with the JVM and operating system to gather data on system resources.
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Service
 @Slf4j

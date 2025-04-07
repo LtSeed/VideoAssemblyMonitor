@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents progress information for a node, including index, name, quota, parent node index list, and current progress percentage.
- * <br>
- * Typically used for frontend display or API responses to visualize the execution progress of state machine nodes.
+ * Represents progress information for a node within a state machine.
+ * <p>
+ * This class encapsulates key details such as the node's index, name, quota, parent node indices,
+ * current progress, and an additional computed parameter 'p'. Instances of this class are typically used
+ * for frontend display or API responses to visualize the execution progress of state machine nodes.
+ * </p>
  */
 @Getter
 @Setter
@@ -21,23 +24,43 @@ public class ProgressBar {
      */
     private int index;
 
+    /**
+     * The name of the node.
+     */
     private String name;
 
+    /**
+     * The quota assigned to the node, representing the total capacity or target value used in progress calculation.
+     */
     private double quota;
 
+    /**
+     * A list of parent node indices. This list represents the node IDs of the direct ancestors in the state machine.
+     */
     private List<Integer> parent;
 
+    /**
+     * The current progress of the node, computed as a fraction or percentage of the quota that has been completed.
+     */
     private double progress;
 
+    /**
+     * A computed parameter 'p' related to the node's progress or performance.
+     * The exact meaning of this parameter is determined by the state machine logic.
+     */
     private double p;
 
-
     /**
-     * Constructs a ProgressBar from a {@link Node}, using the provided configuration service and preset name.
+     * Constructs a {@code ProgressBar} from a given {@link Node}.
+     * <p>
+     * This constructor initializes the progress bar by extracting relevant details from the provided node.
+     * It calculates the quota using the provided configuration service and preset name, retrieves the list of parent node IDs,
+     * and computes the current progress and parameter 'p' using the node's internal methods.
+     * </p>
      *
-     * @param node           The state machine node.
-     * @param configService  The configuration service.
-     * @param presetName     The name of the preset.
+     * @param node           The state machine node from which to extract progress information.
+     * @param configService  The configuration service used to compute the node's quota.
+     * @param presetName     The name of the preset configuration used in quota calculation.
      */
     public ProgressBar(Node node, ConfigService configService, String presetName) {
         this.index = node.getId();
@@ -49,9 +72,13 @@ public class ProgressBar {
     }
 
     /**
-     * Returns a string representation of the progress bar, including node index, name, quota, parents, progress, and p value.
+     * Returns a string representation of this progress bar.
+     * <p>
+     * The string includes the node's index, name, quota, list of parent node indices,
+     * progress value, and the computed parameter 'p'.
+     * </p>
      *
-     * @return The string.
+     * @return A string describing this progress bar.
      */
     @Override
     public String toString() {

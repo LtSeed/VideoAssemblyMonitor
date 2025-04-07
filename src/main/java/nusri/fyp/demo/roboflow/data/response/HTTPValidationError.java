@@ -11,6 +11,9 @@ import java.util.Map;
  * Represents a validation error returned in HTTP responses from the Roboflow API.
  * <br> This class contains the error details typically returned when the request fails due to invalid data or parameters.
  * <br> The `detail` field holds the specifics of the validation error.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class HTTPValidationError implements RoboflowResponseData {

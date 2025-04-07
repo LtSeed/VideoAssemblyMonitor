@@ -10,6 +10,8 @@ import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
 /**
  * Abstract class representing a general action-observation entity that can include information such as probability, actions, and objects.
  * <br> This class uses Jackson annotations for polymorphic serialization and deserialization, allowing different subclasses to be mapped to the same parent class.
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Getter
 @Setter

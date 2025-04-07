@@ -7,6 +7,9 @@ import java.util.List;
  * Represents the description of an external operator.
  * <br> An external operator defines an operation that is applied in a workflow or processing pipeline,
  * detailing the types and numbers of operands it requires, and a description of its function.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ExternalOperatorDescription {

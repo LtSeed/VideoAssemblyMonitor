@@ -5,6 +5,9 @@ import lombok.Data;
 /**
  * Represents a gaze detection prediction associated with a face.
  * <br> This class holds the information about the face being detected and the gaze angles (yaw and pitch).
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class GazeDetectionPrediction {

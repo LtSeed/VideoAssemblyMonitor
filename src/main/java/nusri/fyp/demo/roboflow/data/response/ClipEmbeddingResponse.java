@@ -8,6 +8,9 @@ import java.util.List;
 /**
  * Represents the response for a CLIP embedding request to the Roboflow API.
  * <br> This class contains the data returned by the API after performing a CLIP (Contrastive Language-Image Pretraining) embedding.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ClipEmbeddingResponse implements RoboflowResponseData {

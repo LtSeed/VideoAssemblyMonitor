@@ -8,6 +8,9 @@ import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
 /**
  * Represents a request to perform SAM (Segment Anything Model) embedding.
  * <br> This request is used to send an image for embedding using the SAM model, specifically the SAM2 version, which performs image segmentation.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

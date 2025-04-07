@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents the definition of a dynamic block.
  * <br> A dynamic block is a component of a workflow or model that can be configured
  * to perform a certain operation, such as data processing or transformation.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class DynamicBlockDefinition {

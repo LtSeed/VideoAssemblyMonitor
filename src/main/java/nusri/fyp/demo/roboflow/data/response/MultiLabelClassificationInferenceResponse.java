@@ -11,6 +11,9 @@ import java.util.Map;
  * Represents the response for multi-label classification inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing multi-label classification inference on an image.
  * <br> The response includes the predictions for each label and a list of the predicted classes.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class MultiLabelClassificationInferenceResponse implements RoboflowResponseData {

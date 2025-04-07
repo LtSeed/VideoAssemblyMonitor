@@ -8,6 +8,9 @@ import java.util.List;
 /**
  * Represents the response for retrieving versions of the execution engine from the Roboflow API.
  * <br> This class contains a list of available execution engine versions, returned by the API.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ExecutionEngineVersions implements RoboflowResponseData {

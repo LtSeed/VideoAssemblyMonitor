@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for CLIP image embedding in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform CLIP image embedding,
  * which generates a feature vector representation of an image using the CLIP model.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

@@ -10,6 +10,9 @@ import java.util.List;
  * Represents the response for dynamic block output in the Roboflow API.
  * <br> This class contains the data returned by the API for a dynamic block output, which includes the
  * name of the output and its associated kinds.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class DynamicBlockOutputResponse implements RoboflowResponseData {

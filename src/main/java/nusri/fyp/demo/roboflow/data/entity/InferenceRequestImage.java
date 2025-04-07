@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents image data for an inference request.
  * <br> This class encapsulates various image data formats and properties used in making inference requests.
  * <br> It supports multiple input types such as URL, base64 encoded strings, or numpy arrays.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

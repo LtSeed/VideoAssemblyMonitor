@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents a request for CLIP text embedding in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform CLIP text embedding,
  * which generates a feature vector representation of text using the CLIP model.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

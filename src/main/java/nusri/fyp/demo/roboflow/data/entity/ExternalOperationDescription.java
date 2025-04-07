@@ -8,6 +8,9 @@ import java.util.List;
  * <br> An external operation defines an operation performed within a workflow or processing pipeline,
  * including the types of inputs and outputs it handles, whether it is a compound operation,
  * and additional nested operations it may include.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ExternalOperationDescription {

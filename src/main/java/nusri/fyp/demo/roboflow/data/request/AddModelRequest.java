@@ -8,6 +8,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents a request to add a model to the inference server in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to add a model to the inference server,
  * providing necessary details such as the model's ID, type, and an optional API key.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

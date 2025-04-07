@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.entity.InferenceRequestImage;
  * Represents a request for TrOCR (Transformer OCR) inference.
  * <br> This request is used to perform optical character recognition (OCR) on an image using the TrOCR model.
  * The request includes parameters such as the image data, model configurations, and other relevant settings for performing OCR.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

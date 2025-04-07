@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.RoboflowRequestData;
  * Represents a request to describe a workflow specification interface.
  * <br> This request is used to fetch the details of a specified workflow interface,
  * typically including its structure and requirements, using a given specification.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

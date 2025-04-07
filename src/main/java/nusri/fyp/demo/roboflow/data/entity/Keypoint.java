@@ -5,6 +5,9 @@ import lombok.Data;
 /**
  * Represents a single keypoint with its coordinates, confidence, and associated class information.
  * <br> This class is used in keypoint detection tasks where the goal is to locate specific points (e.g., joints in a human pose) in an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class Keypoint {

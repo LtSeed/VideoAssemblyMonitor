@@ -8,6 +8,8 @@ import lombok.Setter;
 /**
  * Concrete implementation of action observation, inheriting from {@link AbstractActionObservation}.
  * <br> This class contains the action-object string and the probability, representing the detected "action-object" prediction results.
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Getter
 @Setter

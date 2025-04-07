@@ -11,6 +11,9 @@ import java.io.IOException;
  * Custom deserializer for the {@link AnyData} class.
  * <br> This class is responsible for deserializing JSON data into the {@link AnyData} object.
  * <br> It reads the entire JSON node as a string and stores it in the {@link AnyData} object.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 public class AnyDataDeserializer extends JsonDeserializer<AnyData> {
 

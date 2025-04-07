@@ -7,6 +7,9 @@ import java.util.List;
  * Represents the definition of a dynamic output.
  * <br> A dynamic output is a configurable output for a dynamic block that specifies how the output data
  * should be processed or structured within a workflow.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class DynamicOutputDefinition {

@@ -21,6 +21,9 @@ import java.util.Objects;
  * Abstract class representing request data for Roboflow API operations.
  * <br> This class provides methods for serializing the request data to different formats such as HTTP request bodies and JSON payloads.
  * <br> Subclasses of this class represent specific request data types for different Roboflow API requests.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Slf4j
 public abstract class RoboflowRequestData {

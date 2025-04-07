@@ -16,6 +16,9 @@ import java.util.Map;
  * Represents a request for workflow specification inference.
  * <br> This request is used to trigger an inference process using a specified workflow.
  * It includes various inputs and specification details necessary for the inference process.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

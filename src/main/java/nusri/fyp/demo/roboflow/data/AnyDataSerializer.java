@@ -9,6 +9,9 @@ import java.io.IOException;
 /**
  * Custom serializer for the {@link AnyData} class.
  * <br> This class is responsible for serializing an {@link AnyData} object into its raw JSON string representation.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 public class AnyDataSerializer extends JsonSerializer<AnyData> {
 

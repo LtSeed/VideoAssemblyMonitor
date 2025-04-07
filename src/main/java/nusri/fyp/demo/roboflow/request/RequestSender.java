@@ -11,6 +11,9 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface for sending HTTP requests to the Roboflow API.
  * <br> This interface defines methods for sending asynchronous HTTP requests, both POST and GET, to the Roboflow API with appropriate request and response data handling.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 public interface RequestSender {
 

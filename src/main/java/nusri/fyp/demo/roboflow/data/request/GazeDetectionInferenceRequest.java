@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for gaze detection inference in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform gaze detection inference,
  * which detects the gaze direction of a person from an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

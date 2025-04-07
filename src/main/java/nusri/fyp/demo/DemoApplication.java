@@ -15,6 +15,8 @@ import java.util.stream.Stream;
 /**
  * The main entry point for the Spring Boot application.
  * <br> This class initializes the Spring Boot application and enables various features such as scheduling, caching, and aspect-oriented programming.
+ * @author Liu Binghong
+ * @since 1.0
  */
 @SpringBootApplication
 @EnableScheduling  // Enables scheduling support in Spring

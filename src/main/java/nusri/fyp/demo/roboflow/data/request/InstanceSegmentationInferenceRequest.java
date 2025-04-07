@@ -11,6 +11,9 @@ import java.util.List;
  * Represents a request for instance segmentation inference in the Roboflow API.
  * <br> This class is used to send a request to the Roboflow API to perform instance segmentation inference,
  * which segments individual objects in an image, distinguishing between different object instances.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

@@ -6,6 +6,9 @@ import lombok.Data;
  * Represents the dimensions of an image in an inference response.
  * <br> This class holds the width and height of an image, typically used to describe the resolution of an image
  * in the context of inference results.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class InferenceImageDimensions {

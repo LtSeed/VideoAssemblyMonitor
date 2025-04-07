@@ -33,6 +33,8 @@ import static java.lang.Math.min;
  *       if Quota is disabled, it skips this step.</li>
  *   <li>{@link #getMostProbableState()}: Returns the current node with the highest probability.</li>
  * </ul>
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Slf4j
 @Getter
@@ -228,7 +230,6 @@ public class StateMachine {
             log.debug("LQ of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.getLowerQuota(quotaConfig))).collect(Collectors.joining(", ")));
 
         } else {
-            // 如果Quota禁用：在此不做实时更新，而留待离线HMM。
             log.debug("Quota disabled -> Skip real-time update. Will do HMM/Viterbi offline.");
         }
     }
@@ -248,7 +249,6 @@ public class StateMachine {
 
         log.info("clearAndUpdateToTime, observation size: {}", observations.size());
 
-        // 先重置节点的概率和访问概率
         nodes.forEach(Node::clear);
         idle.clear();
         lastUpdate = 0;
@@ -258,7 +258,6 @@ public class StateMachine {
         boolean isQuotaDisabled = isDisabled(configService, this.getPreset().getName());
 
         if (!isQuotaDisabled) {
-            // 如果Quota启用 -> 按照时间顺序一帧帧调用 updateStateProbability
             observations.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey(Comparator.comparing(k -> k)))
                     .filter(e -> ((e.getKey() > startSec) ? (e.getKey() - startSec) : e.getKey()) <= tillTimestamp * 1000)

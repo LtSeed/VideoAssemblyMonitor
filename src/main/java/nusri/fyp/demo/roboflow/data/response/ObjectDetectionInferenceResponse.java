@@ -10,6 +10,9 @@ import java.util.List;
  * Represents the response for object detection inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing object detection inference on an image.
  * <br> The response includes a list of predictions for the detected objects.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ObjectDetectionInferenceResponse implements RoboflowResponseData {

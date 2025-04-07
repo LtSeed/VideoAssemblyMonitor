@@ -10,6 +10,9 @@ import java.util.List;
  * Represents a description of multiple models in the Roboflow API.
  * <br> This class contains the list of models available, typically describing the model metadata.
  * <br> The `models` field holds the data for each model, which can be expanded to a specific model type if needed.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class ModelsDescriptions implements RoboflowResponseData {

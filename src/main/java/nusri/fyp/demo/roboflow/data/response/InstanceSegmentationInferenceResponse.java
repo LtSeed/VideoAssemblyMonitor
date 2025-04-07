@@ -9,6 +9,9 @@ import java.util.List;
 /**
  * Represents the response for instance segmentation inference in the Roboflow API.
  * <br> This class contains the data returned by the API after performing instance segmentation inference on an image.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @Data
 public class InstanceSegmentationInferenceResponse implements RoboflowResponseData {

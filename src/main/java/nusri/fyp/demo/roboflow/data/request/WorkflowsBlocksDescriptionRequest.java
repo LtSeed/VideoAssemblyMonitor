@@ -9,6 +9,9 @@ import nusri.fyp.demo.roboflow.data.entity.DynamicBlockDefinition;
  * Represents a request to describe blocks within a workflow.
  * <br> This request is used to fetch the description of blocks that are part of a workflow,
  * including dynamic block definitions and the execution engine version.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

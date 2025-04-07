@@ -7,6 +7,8 @@ import java.util.*;
  * of data into multiple segments, considering various constraints such as quotas and processing time.
  * This class is designed to handle the segmentation of data into balanced partitions with the goal of
  * maximizing the overall score for each partition.
+ * @author Liu Binghong
+ * @since 1.0
  */
 public class SegmentPartitionByDP {
 
@@ -87,7 +89,7 @@ public class SegmentPartitionByDP {
         int[][] choiceIndex = new int[K + 1][n + 1];
         for (int seg = 1; seg <= K; seg++) {
             for (int i = 1; i <= n; i++) {
-                // At least seg keys are needed to form seg segments (each segment gets ≥1 key)
+                // At least seg keys are needed to form seg segments (each segment gets >= 1 key)
                 if (i < seg) {
                     dp[seg][i] = Double.NEGATIVE_INFINITY;
                     choiceIndex[seg][i] = -1;

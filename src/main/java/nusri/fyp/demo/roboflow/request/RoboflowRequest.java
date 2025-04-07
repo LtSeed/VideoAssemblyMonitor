@@ -25,6 +25,9 @@ import java.util.concurrent.TimeoutException;
 /**
  * Enum representing various Roboflow API requests.
  * Each enum constant corresponds to a specific API endpoint with its associated HTTP method, URI, success and failure response types, and request body type.
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 @SuppressWarnings("unused")
 @Slf4j

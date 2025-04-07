@@ -48,5 +48,8 @@
  * services, and it abstracts the complexity of making API calls, simplifying the integration of powerful machine
  * learning models into applications.
  * </p>
+ *
+ * @author Liu Binghong
+ * @since 1.0
  */
 package nusri.fyp.demo.roboflow;
