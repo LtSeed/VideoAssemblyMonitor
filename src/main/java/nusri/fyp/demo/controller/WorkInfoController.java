@@ -8,6 +8,7 @@ import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
 import nusri.fyp.demo.service.ConfigService;
 import nusri.fyp.demo.service.VideoService;
 import nusri.fyp.demo.service.StateMachineService;
+import nusri.fyp.demo.service.img_sender.ImageSenderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +24,8 @@ import java.util.*;
 @Slf4j
 public class WorkInfoController {
 
-    private final ConfigService configService;
     private final StateMachineService stateMachineService;
-    private final VideoService videoService;
+    private final ImageSenderService imageSenderService;
 
     /**
      * Endpoint to get the progress of a work session.
@@ -94,9 +94,8 @@ public class WorkInfoController {
      */
     @GetMapping("/interrupt")
     public void interruptStateMachine(@RequestParam String user) {
-        String s = configService.getUseModel(stateMachineService.getStateMachineByName(user).getPreset().getName());
         stateMachineService.stopAndLogStateMachine(user);
-        videoService.getUseImageSender(s).interrupt(user);
+        imageSenderService.interrupt(user);
     }
 
     /**
@@ -126,14 +125,11 @@ public class WorkInfoController {
      * Constructs a {@link WorkInfoController} with the required services and repositories.
      *
      * @param stateMachineService The state machine service.
-     * @param configService The configuration service.
-     * @param videoService  The video service.
+     * @param imageSenderService  The image sender service.
      */
     WorkInfoController(StateMachineService stateMachineService,
-                       ConfigService configService,
-                       VideoService videoService) {
+                       ImageSenderService imageSenderService) {
         this.stateMachineService = stateMachineService;
-        this.configService = configService;
-        this.videoService = videoService;
+        this.imageSenderService = imageSenderService;
     }
 }

@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.repository.PythonServerRepository;
 import nusri.fyp.demo.service.ConfigService;
+import nusri.fyp.demo.service.img_sender.ImageSender;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import nusri.fyp.demo.state_machine.ActionObservation;
@@ -17,7 +18,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -51,8 +51,7 @@ import java.util.concurrent.*;
  * @see ActionObservation
  */
 @Slf4j
-@Service
-public class ImageSenderServiceImplOfPython extends ImageSenderService {
+public class ImageSenderOfPython implements ImageSender {
 
     /**
      * Flag indicating whether the Python server should be used for inference.
@@ -61,6 +60,8 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
     public static final boolean USE_PYTHON = true;
 
     private final ObjectMapper objectMapper;
+
+    private final ImageSenderService imageSenderService;
 
     /**
      * A map of {@link PythonServerLoadBalancer} instances, keyed by their host+port strings.
@@ -72,15 +73,14 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
      * <br>
      * Each record in the repository provides a host/port, and a corresponding {@link PythonServerLoadBalancer} is created.
      *
-     * @param configService the configuration service for retrieving necessary settings
      * @param objectMapper  the Jackson {@link ObjectMapper} for JSON parsing
      * @param pythonServerRepository the repository that holds Python server info (host, port, etc.)
      * @see PythonServerRepository
      */
-    public ImageSenderServiceImplOfPython(ConfigService configService,
-                                          ObjectMapper objectMapper,
-                                          PythonServerRepository pythonServerRepository) {
-        super(configService);
+    public ImageSenderOfPython(ImageSenderService imageSenderService,
+                               ObjectMapper objectMapper,
+                               PythonServerRepository pythonServerRepository) {
+        this.imageSenderService = imageSenderService;
         this.objectMapper = objectMapper;
         this.loadBalancers = new HashMap<>();
 
@@ -156,9 +156,9 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
 
         // Track this future in the map for possible interruption later
         List<CompletableFuture<List<AbstractActionObservation>>> userFutures =
-                sendingProcesses.getOrDefault(user, new ArrayList<>());
+                imageSenderService.sendingProcesses.getOrDefault(user, new ArrayList<>());
         userFutures.add(futureResult);
-        sendingProcesses.put(user, userFutures);
+        imageSenderService.sendingProcesses.put(user, userFutures);
 
         return futureResult;
     }
@@ -170,10 +170,10 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
      * @param user the user identifier
      */
     public void interruptSendingProcesses(String user) {
-        if (!sendingProcesses.containsKey(user)) {
+        if (!imageSenderService.sendingProcesses.containsKey(user)) {
             return;
         }
-        List<CompletableFuture<List<AbstractActionObservation>>> futures = sendingProcesses.get(user);
+        List<CompletableFuture<List<AbstractActionObservation>>> futures = imageSenderService.sendingProcesses.get(user);
         try {
             futures.forEach(future -> future.cancel(true));
         } catch (Exception ignored) {
@@ -191,13 +191,13 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
     @Override
     public void interrupt(String user) {
         interruptSendingProcesses(user);
-        totleFramesMap.remove(user);
-        progressMap.remove(user);
-        sendingProcesses.remove(user);
+        imageSenderService.totleFramesMap.remove(user);
+        imageSenderService.progressMap.remove(user);
+        imageSenderService.sendingProcesses.remove(user);
 
         // Delete the temporary video file if present
-        if (tempFiles.containsKey(user)) {
-            File file = tempFiles.get(user);
+        if (imageSenderService.tempFiles.containsKey(user)) {
+            File file = imageSenderService.tempFiles.get(user);
             new Thread(() -> {
                 int cnt = 0;
                 while (!file.delete()) {
@@ -206,7 +206,7 @@ public class ImageSenderServiceImplOfPython extends ImageSenderService {
                         break;
                     }
                 }
-                tempFiles.remove(user);
+                imageSenderService.tempFiles.remove(user);
             }).start();
         }
     }

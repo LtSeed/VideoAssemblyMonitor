@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfPython.USE_PYTHON;
+import static nusri.fyp.demo.service.img_sender.python.ImageSenderOfPython.USE_PYTHON;
 
 /**
  * <b>Service responsible for load balancing among multiple Python server instances.</b>
@@ -33,7 +33,7 @@ import static nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfP
  * </ul>
  * <br>
  * Usage scenario:
- * <br> - This service is typically used by {@link ImageSenderServiceImplOfPython} (and others) to balance
+ * <br> - This service is typically used by {@link ImageSenderOfPython} (and others) to balance
  * the load among multiple Python servers when sending images for processing.
  * <p>
  * Note:
@@ -42,7 +42,7 @@ import static nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfP
  *
  * @author Liu Binghong
  * @since 1.0
- * @see ImageSenderServiceImplOfPython
+ * @see ImageSenderOfPython
  */
 @Slf4j
 @EnableAsync

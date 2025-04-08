@@ -1,7 +1,12 @@
 package nusri.fyp.demo.service.img_sender;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import nusri.fyp.demo.repository.PythonServerRepository;
 import nusri.fyp.demo.service.ConfigService;
+import nusri.fyp.demo.service.img_sender.python.ImageSenderOfPython;
+import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderOfRoboflow;
+import nusri.fyp.demo.service.img_sender.roboflow.RoboflowService;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import nusri.fyp.demo.state_machine.StateMachine;
 import org.opencv.core.Mat;
@@ -27,7 +32,7 @@ import java.util.concurrent.*;
  *   <li><b>Frame Skipping:</b> The number of frames to skip is determined by {@link ConfigService}.
  *   This helps manage performance by not processing every single frame if unnecessary.</li>
  *   <li><b>Asynchronous Processing:</b> Each frame can be sent asynchronously (implementation-defined in
- *   {@link #sendFrameAsync(Mat, String, Map)}) to allow concurrent recognition tasks.</li>
+ *   {@code #sendFrameAsync(Mat, String, Map)}) to allow concurrent recognition tasks.</li>
  * </ul>
  *
  * <p>The resulting maps and data structures are stored in concurrency-friendly collections like {@link ConcurrentHashMap}
@@ -38,11 +43,10 @@ import java.util.concurrent.*;
  * @see ConfigService
  * @see AbstractActionObservation
  * @see StateMachine
- * @see #sendVideoFile(File, String, Map)
  */
 @Service
 @Slf4j
-public abstract class ImageSenderService {
+public class ImageSenderService {
 
     /**
      * The {@link ConfigService} providing configuration such as frame interval or video path.
@@ -79,52 +83,20 @@ public abstract class ImageSenderService {
      * Constructor that injects the config service.
      * <br> The config service is used for retrieving settings like the frame interval or video path.
      *
-     * @param configService the configuration service object
+     * @param configService the configuration service object.
+     * @param objectMapper the object mapper.
+     * @param roboflowService the roboflow service.
+     * @param pythonServerRepository the python server repo.
      * @see ConfigService
      */
-    public ImageSenderService(ConfigService configService) {
+    public ImageSenderService(ConfigService configService, RoboflowService roboflowService, ObjectMapper objectMapper, PythonServerRepository pythonServerRepository) {
         this.configService = configService;
+        this.imageSenderOfRoboflow = new ImageSenderOfRoboflow(roboflowService);
+        this.imageSenderOfPython = new ImageSenderOfPython(this, objectMapper, pythonServerRepository);
     }
 
-    /**
-     * Synchronously sends an image frame (OpenCV {@link Mat}) to the model for recognition.
-     * <br> Implementations are expected to convert the frame as needed (e.g., to a PNG byte array or a Base64 string).
-     *
-     * @param frame  the OpenCV {@link Mat} object representing a single image frame
-     * @param config a {@link Map} of relevant configurations (e.g., host, port, or other settings)
-     * @return a list of {@link AbstractActionObservation} instances representing the recognized actions/objects
-     * @throws IOException if an I/O problem occurs during sending
-     */
-    public abstract List<? extends AbstractActionObservation> sendFrame(Mat frame, Map<String, String> config) throws IOException;
-
-    /**
-     * Synchronously sends a Base64-encoded image string to the model for recognition.
-     * <br> Useful for scenarios where frames are captured or stored in Base64.
-     *
-     * @param frame  a Base64-encoded image string
-     * @param config a {@link Map} of relevant configurations
-     * @return a list of {@link AbstractActionObservation} instances for the recognized actions/objects
-     */
-    public abstract List<? extends AbstractActionObservation> sendFrame(String frame, Map<String, String> config);
-
-    /**
-     * Sends an image frame (OpenCV {@link Mat}) to the model asynchronously for recognition.
-     * <br> Returns a {@link CompletableFuture} that completes when the recognition result is available.
-     *
-     * @param frame  the OpenCV {@link Mat} representing a single image frame
-     * @param user   the user identifier (to track or cancel ongoing tasks)
-     * @param config a {@link Map} of relevant configurations
-     * @return a {@link CompletableFuture} containing a list of {@link AbstractActionObservation}
-     */
-    public abstract CompletableFuture<List<AbstractActionObservation>> sendFrameAsync(Mat frame, String user, Map<String, String> config);
-
-    /**
-     * Interrupts (cancels) the ongoing recognition process for the specified user, if any.
-     * <br> Typically cancels any pending or running {@link CompletableFuture} tasks in {@link #sendingProcesses}.
-     *
-     * @param user the user identifier
-     */
-    public abstract void interrupt(String user);
+    private final ImageSenderOfRoboflow imageSenderOfRoboflow;
+    private final ImageSenderOfPython imageSenderOfPython;
 
     /**
      * Reads a video file from disk and sends each frame to the model for recognition.
@@ -133,7 +105,7 @@ public abstract class ImageSenderService {
      *     <li>OpenCV's {@link VideoCapture} to read frames from the file.</li>
      *     <li>The frame-skip interval from {@link ConfigService} to potentially skip frames.</li>
      *     <li>An asynchronous sending mechanism:
-     *         see {@link #sendFrameAsync(Mat, String, Map)} for details on how frames are actually recognized.</li>
+     *         see {@code #sendFrameAsync(Mat, String, Map)} for details on how frames are actually recognized.</li>
      * </ul>
      *
      * @param file  the video {@link File} to process
@@ -146,7 +118,7 @@ public abstract class ImageSenderService {
      * @see Videoio#CAP_PROP_FRAME_COUNT
      * @see Videoio#CAP_PROP_FPS
      */
-    public Map<Long, List<? extends AbstractActionObservation>> sendVideoFile(File file, String user, Map<String, String> config) throws IOException {
+    public Map<Long, List<? extends AbstractActionObservation>> sendVideoFile(File file, String user, Map<String, String> config, ImageSender imageSender) throws IOException {
         File dir = new File(configService.getVideoPath());
         if (!dir.exists()) {
             //noinspection ResultOfMethodCallIgnored
@@ -192,7 +164,7 @@ public abstract class ImageSenderService {
             Mat clonedFrame = new Mat();
             frame.copyTo(clonedFrame);
 
-            CompletableFuture<List<AbstractActionObservation>> futureResult = sendFrameAsync(clonedFrame, user, config);
+            CompletableFuture<List<AbstractActionObservation>> futureResult = imageSender.sendFrameAsync(clonedFrame, user, config);
             long finalFrameIndex = frameIndex;
 
             // Insert the recognition outcome into 'observations' when ready
@@ -217,7 +189,7 @@ public abstract class ImageSenderService {
      * Processes a single Base64-encoded image and updates the {@link StateMachine}'s observations accordingly.
      * <br> It:
      * <ol>
-     *   <li>Sends the image synchronously via {@link #sendFrame(String, Map)}.</li>
+     *   <li>Sends the image synchronously via {@code #sendFrame(String, Map)}.</li>
      *   <li>Adds the resulting observations to the state machine's observation map.</li>
      *   <li>Invokes {@link StateMachine#updateStateProbability(List, double, ConfigService)} to update probabilities.</li>
      * </ol>
@@ -227,15 +199,16 @@ public abstract class ImageSenderService {
      * @param stateMachine the target state machine to update
      * @param config       additional configuration parameters for the sending logic
      * @see StateMachine
-     * @see #sendFrame(String, Map)
      */
     public void processImg(String img,
                            String timestamp,
                            StateMachine stateMachine,
                            Map<String, String> config) {
 
+        ImageSender imageSender = getUseImageSender(stateMachine.getPreset().getName());
+
         // Step 1: Send the frame synchronously
-        List<? extends AbstractActionObservation> actionObservations = sendFrame(img, config);
+        List<? extends AbstractActionObservation> actionObservations = imageSender.sendFrame(img, config);
 
         // Step 2: Retrieve or create the observations map in the state machine
         Map<Long, List<AbstractActionObservation>> existingObs = stateMachine.getObservations();
@@ -251,5 +224,28 @@ public abstract class ImageSenderService {
         // Step 5: Update the state machine's observation and state
         stateMachine.setObservations(existingObs);
         stateMachine.updateStateProbability(typedList, Double.parseDouble(timestamp), configService);
+    }
+
+    /**
+     * Retrieves the {@link ImageSenderService} being used based on the preset name.
+     * <br> This is a convenience method for external clients that need direct access to the underlying image-sending implementation.
+     *
+     * @param presetName the name of the preset
+     * @return the corresponding {@link ImageSenderService} for that preset
+     */
+    public ImageSender getUseImageSender(String presetName) {
+        return configService.getUseModel(presetName).startsWith("python")
+                ? imageSenderOfPython
+                : imageSenderOfRoboflow;
+    }
+
+    /**
+     * Interrupts the ongoing image sending process for a specific user, effectively canceling the associated asynchronous task.
+     *
+     * @param user The user identifier whose image sending process is to be interrupted.
+     */
+    public void interrupt(String user) {
+        imageSenderOfRoboflow.interrupt(user);
+        imageSenderOfPython.interrupt(user);
     }
 }

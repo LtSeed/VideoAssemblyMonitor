@@ -2,9 +2,10 @@ package nusri.fyp.demo.service;
 
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.repository.RoboflowWorkflowRepository;
+import nusri.fyp.demo.service.img_sender.ImageSender;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
-import nusri.fyp.demo.service.img_sender.python.ImageSenderServiceImplOfPython;
-import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderServiceImplOfRoboflow;
+import nusri.fyp.demo.service.img_sender.python.ImageSenderOfPython;
+import nusri.fyp.demo.service.img_sender.roboflow.ImageSenderOfRoboflow;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import nusri.fyp.demo.state_machine.StateMachine;
 import org.springframework.core.io.Resource;
@@ -33,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>
  * This service works in close association with:
  * <br> - {@link ConfigService} for retrieving model configurations and file paths.
- * <br> - {@link ImageSenderServiceImplOfPython} and {@link ImageSenderServiceImplOfRoboflow} for frame/image processing.
+ * <br> - {@link ImageSenderOfPython} and {@link ImageSenderOfRoboflow} for frame/image processing.
  * <br> - {@link StateMachineService} for integrating recognition results into the state machine.
  * <br> - {@link RoboflowWorkflowRepository} for retrieving workflow IDs in a Roboflow environment.
  * </p>
@@ -42,8 +43,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see ConfigService
  * @see StateMachineService
  * @see ImageSenderService
- * @see ImageSenderServiceImplOfPython
- * @see ImageSenderServiceImplOfRoboflow
+ * @see ImageSenderOfPython
+ * @see ImageSenderOfRoboflow
  * @see RoboflowWorkflowRepository
  */
 @Service
@@ -51,10 +52,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class VideoService {
 
     private final ConfigService configService;
-    private final ImageSenderServiceImplOfPython imageSenderServiceImplOfPython;
-    private final ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow;
     private final StateMachineService stateMachineService;
     private final RoboflowWorkflowRepository roboflowWorkflowRepository;
+    private final ImageSenderService imageSenderService;
 
     /**
      * Constructs the {@link VideoService} with the required dependencies for video processing.
@@ -62,26 +62,21 @@ public class VideoService {
      * {@link ImageSenderService}, the {@link StateMachineService}, and the {@link RoboflowWorkflowRepository}.
      *
      * @param configService                the configuration service for retrieving file paths and model info
-     * @param imageSenderServiceImplOfPython the Python-based implementation of image sending
-     * @param imageSenderServiceImplOfRoboflow the Roboflow-based implementation of image sending
      * @param stateMachineService          the service for managing state machines
      * @param roboflowWorkflowRepository   the repository for Roboflow workflow data
      * @see ConfigService
-     * @see ImageSenderServiceImplOfPython
-     * @see ImageSenderServiceImplOfRoboflow
+     * @see ImageSenderOfPython
+     * @see ImageSenderOfRoboflow
      * @see StateMachineService
      * @see RoboflowWorkflowRepository
      */
     public VideoService(ConfigService configService,
-                        ImageSenderServiceImplOfPython imageSenderServiceImplOfPython,
-                        ImageSenderServiceImplOfRoboflow imageSenderServiceImplOfRoboflow,
                         StateMachineService stateMachineService,
-                        RoboflowWorkflowRepository roboflowWorkflowRepository) {
+                        RoboflowWorkflowRepository roboflowWorkflowRepository, ImageSenderService imageSenderService) {
         this.configService = configService;
-        this.imageSenderServiceImplOfPython = imageSenderServiceImplOfPython;
-        this.imageSenderServiceImplOfRoboflow = imageSenderServiceImplOfRoboflow;
         this.stateMachineService = stateMachineService;
         this.roboflowWorkflowRepository = roboflowWorkflowRepository;
+        this.imageSenderService = imageSenderService;
     }
 
     /**
@@ -106,7 +101,6 @@ public class VideoService {
     public ResponseEntity<? extends Serializable> processVideo(String user, String presetName) {
         log.info("user start to process video: {}", user);
         String modelWithConfig = configService.getUseModel(presetName);
-        ImageSenderService imageSenderService = buildSenderService(modelWithConfig);
         Map<String, String> config = buildConfig(modelWithConfig);
 
         if (!imageSenderService.tempFiles.containsKey(user)) {
@@ -120,7 +114,7 @@ public class VideoService {
         Thread thread = new Thread(() -> {
             try {
                 Map<Long, List<? extends AbstractActionObservation>> longListMap =
-                        imageSenderService.sendVideoFile(imageSenderService.tempFiles.get(user), user, config);
+                        imageSenderService.sendVideoFile(imageSenderService.tempFiles.get(user), user, config, imageSenderService.getUseImageSender(presetName));
 
                 Map<Long, List<AbstractActionObservation>> listMap = new TreeMap<>();
                 longListMap.forEach((key, value) ->
@@ -167,8 +161,7 @@ public class VideoService {
      */
     public ResponseEntity<String> uploadAndSave(MultipartFile videoFile, String user) throws IOException {
         stateMachineService.stopStateMachine(user);
-        imageSenderServiceImplOfPython.interrupt(user);
-        imageSenderServiceImplOfRoboflow.interrupt(user);
+        imageSenderService.interrupt(user);
 
         if (videoFile.isEmpty()) {
             log.error("video file is empty");
@@ -190,9 +183,7 @@ public class VideoService {
         log.info("Saved video file to {}", destinationFile.getAbsolutePath());
 
         // Update references for Python-based and Roboflow-based services
-        imageSenderServiceImplOfPython.tempFiles.put(user, destinationFile);
-        imageSenderServiceImplOfRoboflow.tempFiles.put(user, destinationFile);
-
+        imageSenderService.tempFiles.put(user, destinationFile);
         return null;
     }
 
@@ -249,7 +240,6 @@ public class VideoService {
 
         StateMachine stateMachineByName = stateMachineService.getStateMachineByName(user);
         String modelWithConfig = configService.getUseModel(stateMachineByName.getPreset().getName());
-        ImageSenderService imageSenderService = buildSenderService(modelWithConfig);
         Map<String, String> config = buildConfig(modelWithConfig);
 
         // Delegate image processing to the chosen service
@@ -282,17 +272,16 @@ public class VideoService {
     }
 
     /**
-     * Selects the appropriate {@link ImageSenderService} based on the model configuration string.
-     * <br> If 'python' is specified, {@link ImageSenderServiceImplOfPython} is used; otherwise, {@link ImageSenderServiceImplOfRoboflow}.
+     * Selects the appropriate {@link ImageSender} based on the model configuration string.
+     * <br> If 'python' is specified, {@link ImageSenderOfPython} is used; otherwise, {@link ImageSenderOfRoboflow}.
      *
      * @param modelWithConfig the configuration string (e.g., "python@localhost:5000")
      * @return the chosen {@link ImageSenderService} implementation
-     * @see ImageSenderServiceImplOfPython
-     * @see ImageSenderServiceImplOfRoboflow
+     * @see ImageSenderOfPython
+     * @see ImageSenderOfRoboflow
      */
-    private ImageSenderService buildSenderService(String modelWithConfig) {
-        String[] split = modelWithConfig.split("@");
-        return split[0].equalsIgnoreCase("python") ? imageSenderServiceImplOfPython : imageSenderServiceImplOfRoboflow;
+    private ImageSender buildSenderService(String modelWithConfig) {
+        return imageSenderService.getUseImageSender(modelWithConfig);
     }
 
     /**
@@ -303,12 +292,6 @@ public class VideoService {
      * @return a double value representing the processing progress (0 = not started, 1 = completed)
      */
     public Double getProgress(String user) {
-        // Determine which service is handling progress for the user
-        ImageSenderService imageSenderService =
-                imageSenderServiceImplOfPython.progressMap.containsKey(user)
-                        ? imageSenderServiceImplOfPython
-                        : imageSenderServiceImplOfRoboflow;
-
         long processedFrames = imageSenderService.progressMap.getOrDefault(user, new HashMap<>()).size();
         long totalFrames = imageSenderService.totleFramesMap.getOrDefault(user, 1L);
         return (double) processedFrames / totalFrames;
@@ -324,10 +307,6 @@ public class VideoService {
      */
     public ResponseEntity<?> getFileResponse(String user) throws MalformedURLException {
         // Determine which service has the temp file for the user
-        ImageSenderService imageSenderService =
-                imageSenderServiceImplOfPython.tempFiles.containsKey(user)
-                        ? imageSenderServiceImplOfPython
-                        : imageSenderServiceImplOfRoboflow;
 
         File videoFile = imageSenderService.tempFiles.get(user);
         if (!videoFile.exists()) {
@@ -343,16 +322,4 @@ public class VideoService {
                 .body(videoResource);
     }
 
-    /**
-     * Retrieves the {@link ImageSenderService} being used based on the preset name.
-     * <br> This is a convenience method for external clients that need direct access to the underlying image-sending implementation.
-     *
-     * @param presetName the name of the preset
-     * @return the corresponding {@link ImageSenderService} for that preset
-     */
-    public ImageSenderService getUseImageSender(String presetName) {
-        return configService.getUseModel(presetName).startsWith("python")
-                ? imageSenderServiceImplOfPython
-                : imageSenderServiceImplOfRoboflow;
-    }
 }

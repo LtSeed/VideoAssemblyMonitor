@@ -53,7 +53,7 @@ public class StateMachine {
     /**
      * Idle node representing the state when no valid action is available.
      */
-    private final Node idle = new Node(0, 100, "Idle");
+    private final Node handling = new Node(0, 100, "Idle");
 
     /**
      * Timestamp (in seconds) of the last state update.
@@ -142,11 +142,9 @@ public class StateMachine {
             clearP();
 
             if (obs.isEmpty()) {
-                ActionObservation actionObservation = new ActionObservation();
-                actionObservation.setProbability(1);
-                actionObservation.setActionAndObject("transfer");
-
-                obs.add(actionObservation);
+                handling.setProbability(1.0);
+                handling.applyTime(w, configService, this.getPreset().getName());
+                return;
             }
 
             List<? extends AbstractActionObservation> observations = new ArrayList<>(obs);
@@ -189,7 +187,7 @@ public class StateMachine {
                 int Ks = changedNodes.size();
                 changedNodes.forEach(node -> node.addFirstAllocation(observation.s(), observation.getProbability() / Ks));
             }
-            idle.setProbability(1 - observations.stream().mapToDouble(AbstractActionObservation::getProbability).sum());
+            handling.setProbability(1 - observations.stream().mapToDouble(AbstractActionObservation::getProbability).sum());
             for (Node changedNode : changedNodes) {
                 for (Map.Entry<String, Double> sAndV : changedNode.firstAllocation.entrySet()) {
                     List<Node> npByS = getNpByS(changedNode, sAndV.getKey());
@@ -222,7 +220,7 @@ public class StateMachine {
             }
             log.debug("Probabilities of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.P())).collect(Collectors.joining(", ")));
             nodes.forEach(node -> node.applyTime(w, configService, this.getPreset().getName()));
-            idle.applyTime(w, configService, this.getPreset().getName());
+            handling.applyTime(w, configService, this.getPreset().getName());
             log.debug("Visit P of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.realC())).collect(Collectors.joining(", ")));
             log.debug("D of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.D(quotaConfig))).collect(Collectors.joining(", ")));
             log.debug("E of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.E(quotaConfig))).collect(Collectors.joining(", ")));
@@ -230,7 +228,7 @@ public class StateMachine {
             log.debug("LQ of Predictions is {}", nodes.stream().map(n -> String.valueOf(n.getLowerQuota(quotaConfig))).collect(Collectors.joining(", ")));
 
         } else {
-            log.debug("Quota disabled -> Skip real-time update. Will do HMM/Viterbi offline.");
+            log.debug("Quota disabled -> Skip real-time update.");
         }
     }
 
@@ -250,7 +248,7 @@ public class StateMachine {
         log.info("clearAndUpdateToTime, observation size: {}", observations.size());
 
         nodes.forEach(Node::clear);
-        idle.clear();
+        handling.clear();
         lastUpdate = 0;
 
         long startSec = startTime.toEpochSecond(ZoneOffset.of("+8"));
@@ -296,7 +294,7 @@ public class StateMachine {
      * If you want to clear the visit probability as well, you can do so by calling {@link Node#clear()}.
      */
     private void clearP() {
-        idle.setProbability(0.0);
+        handling.setProbability(0.0);
         nodes.forEach(n -> {
             n.setProbability(0.0);
             n.setFirstAllocation(new HashMap<>());
@@ -312,7 +310,7 @@ public class StateMachine {
     public PresetNode getMostProbableState() {
         Node bestNode = nodes.stream()
                 .max(Comparator.comparingDouble(Node::P))
-                .orElse(idle);
+                .orElse(handling);
         return PresetNode.getPresetNode(preset, bestNode);
     }
 }

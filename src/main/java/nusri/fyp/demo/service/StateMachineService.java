@@ -66,7 +66,6 @@ public class StateMachineService {
 
     private final ReviewService reviewService;
     private final ConfigService configService;
-    private final VideoService videoService;
     private final ActionRepository actionRepository;
     private final ObjectRepository objectRepository;
     private final PresetRepository presetRepository;
@@ -76,6 +75,7 @@ public class StateMachineService {
      * Cache of all fetched {@link Preset} objects for performance optimization.
      */
     private static final List<Preset> presetsCache = new ArrayList<>();
+    private final ImageSenderService imageSenderService;
 
     /**
      * Constructor injecting required repositories and services.
@@ -85,7 +85,6 @@ public class StateMachineService {
      * @param stateMachineLogRepository the repository for managing {@link StateMachineLog} entities
      * @param reviewService           the service responsible for replay/analytics
      * @param configService           the service managing various configurations, including {@link QuotaConfig}
-     * @param videoService            the service to handle video-related operations
      * @param actionRepository        the repository for action entities
      * @param objectRepository        the repository for object entities
      * @see PresetRepository
@@ -100,16 +99,15 @@ public class StateMachineService {
                                StateMachineLogRepository stateMachineLogRepository,
                                ReviewService reviewService,
                                ConfigService configService,
-                               VideoService videoService,
                                ActionRepository actionRepository,
-                               ObjectRepository objectRepository) {
+                               ObjectRepository objectRepository, ImageSenderService imageSenderService) {
         this.presetRepository = presetRepository;
         this.stateMachineLogRepository = stateMachineLogRepository;
         this.reviewService = reviewService;
         this.configService = configService;
-        this.videoService = videoService;
         this.actionRepository = actionRepository;
         this.objectRepository = objectRepository;
+        this.imageSenderService = imageSenderService;
     }
 
     /**
@@ -124,7 +122,7 @@ public class StateMachineService {
     public List<ProgressBar> getProgressBars(String name) {
         StateMachine stateMachineByName = getStateMachineByName(name);
         List<Node> nodes = new ArrayList<>(List.copyOf(stateMachineByName.getNodes()));
-        nodes.add(stateMachineByName.getIdle());
+        nodes.add(stateMachineByName.getHandling());
         return nodes.stream()
                 .filter(node -> !node.isHandlingNode())
                 .map(o -> new ProgressBar(o, configService, stateMachineByName.getPreset().getName()))
@@ -408,13 +406,11 @@ public class StateMachineService {
      * @param user   the user identifier
      * @param preset the name of the preset to start
      * @return a {@link ResponseEntity} that indicates success or failure
-     * @see ImageSenderService
      * @see #start(String, Preset)
      * @see #stopStateMachine(String)
      */
     public ResponseEntity<String> getStartResponse(String user, String preset) {
         stopStateMachine(user);
-        ImageSenderService imageSenderService = videoService.getUseImageSender(preset);
         imageSenderService.interrupt(user);
         List<Preset> byId = presetRepository.findPresetByName(preset);
         if (!byId.isEmpty()) {
@@ -442,4 +438,5 @@ public class StateMachineService {
                 objectRepository.getAllObjects()
         );
     }
+
 }

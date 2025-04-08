@@ -2,13 +2,12 @@ package nusri.fyp.demo.service.img_sender.roboflow;
 
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
-import nusri.fyp.demo.service.ConfigService;
+import nusri.fyp.demo.service.img_sender.ImageSender;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -27,8 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  **/
 @Slf4j
-@Service
-public class ImageSenderServiceImplOfRoboflow extends ImageSenderService {
+public class ImageSenderOfRoboflow implements ImageSender {
 
     private final RoboflowService roboflowService;
 
@@ -42,10 +40,8 @@ public class ImageSenderServiceImplOfRoboflow extends ImageSenderService {
      * Constructor that injects the necessary services.
      *
      * @param roboflowService The service responsible for sending images to Roboflow for processing.
-     * @param configService The configuration service that provides necessary system settings.
      */
-    ImageSenderServiceImplOfRoboflow(RoboflowService roboflowService, ConfigService configService) {
-        super(configService);
+    public ImageSenderOfRoboflow(RoboflowService roboflowService) {
         this.roboflowService = roboflowService;
     }
 
