@@ -4,12 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import nusri.fyp.demo.converter.ActionObservationConverter;
-import nusri.fyp.demo.service.ConfigService;
 import nusri.fyp.demo.state_machine.*;
-import org.slf4j.Logger;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 
 /**
@@ -227,109 +224,6 @@ public class StateMachineLog {
             permute(presetNodes, start + 1, allChains);
             Collections.swap(presetNodes, start, i);  // backtrack
         }
-    }
-
-    /**
-     * 
-     * Simulates the execution of the state machine based on the observations in the current log entry.<br>
-     * If Quota is enabled, it performs real-time updates; if Quota is disabled, it performs {@link SegmentPartitionByDP} inference.<br>
-     * The final sequence of steps (nodes) is returned as a timeline.
-     * 
-     *
-     * @param configService The service that provides configuration information for the state machine.
-     * @param log           The logger used for logging.
-     * @return A sorted map of timestamps to the most probable {@link PresetNode} at that time.
-     * @see StateMachine
-     * @see SegmentPartitionByDP
-     */
-    public TreeMap<Long, PresetNode> getTimelineOfProc(ConfigService configService, Logger log) {
-        log.debug("getMatchingPresetNodes: {}", getMatchingPresetNodes());
-
-        // Initialize state machine
-        StateMachine fsm = new StateMachine(this.preset);
-        TreeMap<Long, List<AbstractActionObservation>> obsList = new TreeMap<>(observations);
-        fsm.setObservations(obsList);
-
-        // Check if Quota is enabled
-        String quotaMode = configService.getQuotaConfig(this.preset.getName()).getQuotaMode();
-        boolean isQuotaDisabled = "disabled".equalsIgnoreCase(quotaMode);
-
-        TreeMap<Long, PresetNode> timeline = new TreeMap<>();
-
-        if (!isQuotaDisabled) {
-            // If Quota is enabled, update the state step by step
-            for (Map.Entry<Long, List<AbstractActionObservation>> e : obsList.entrySet()) {
-                Long timestampMs = e.getKey();
-                double timestampSec = timestampMs.doubleValue();
-
-                // Call the update method for each observation
-                fsm.updateStateProbability(e.getValue(), timestampSec, configService);
-
-                // Get the most probable state (PresetNode)
-                PresetNode mostProbable = fsm.getMostProbableState();
-                timeline.put(e.getKey(), mostProbable);
-            }
-
-        } else {
-            log.debug("Quota disabled -> Using offline HMM/Viterbi inference.");
-            Map<Long, List<Integer>> matchingPresetNodesIds = getMatchingPresetNodesIds(false);
-            List<Long> optimalPartitions = SegmentPartitionByDP.findOptimalPartitions(matchingPresetNodesIds);
-
-            TreeMap<Long, PresetNode> result = new TreeMap<>();
-
-            assert optimalPartitions.size() == preset.getNodes().size();
-            PresetNode node = null;
-            try {
-                node = preset.getNode(1);
-            } catch (Throwable e) {
-                log.error(e.getMessage());
-            }
-            if (node != null)
-                result.put(this.getStartTime().toInstant(ZoneOffset.of("+8")).toEpochMilli(), node);
-
-            for (int i = 1; i < optimalPartitions.size(); i++) {
-                Long timestampMs = optimalPartitions.get(i);
-                try {
-                    node = preset.getNode(i + 1);
-                    if (node != null)
-                        result.put(timestampMs + this.getStartTime().toInstant(ZoneOffset.of("+8")).toEpochMilli(), node);
-                } catch (Throwable e) {
-                    log.error(e.getMessage());
-                }
-            }
-            log.debug("Timeline result: {}", result);
-            return result;
-        }
-        log.debug("Timeline result before filter: {}", timeline);
-
-        // Filter out repeated states, only keeping the state change moments
-        Map.Entry<Long, PresetNode> first = timeline.entrySet().stream()
-                .filter(e -> e.getValue().getId().getNumber() >= 0)
-                .min(Comparator.comparingDouble(e -> e.getValue().getId().getNumber()))
-                .orElse(null);
-
-        if (first == null) {
-            return null;
-        }
-
-        Map.Entry<Long, PresetNode> longPresetNodeEntry = timeline.firstEntry();
-        timeline.put(longPresetNodeEntry.getKey(), first.getValue());
-
-        TreeMap<Long, PresetNode> filtered = new TreeMap<>();
-        for (Map.Entry<Long, PresetNode> entry : timeline.entrySet()) {
-            Long currentTime = entry.getKey();
-            Long prevKey = timeline.lowerKey(currentTime);
-            if (prevKey == null) {
-                filtered.put(currentTime, entry.getValue());
-                continue;
-            }
-            if (entry.getValue().getId().getNumber() == timeline.get(prevKey).getId().getNumber()) {
-                continue;
-            }
-            filtered.put(currentTime, entry.getValue());
-        }
-
-        return filtered;
     }
 
     /**

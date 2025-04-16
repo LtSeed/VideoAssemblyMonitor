@@ -2,6 +2,7 @@ package nusri.fyp.demo.state_machine;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.entity.QuotaConfig;
 import nusri.fyp.demo.entity.SingleQuota;
 import nusri.fyp.demo.entity.SingleQuotaOfOffset;
@@ -18,6 +19,7 @@ import static java.lang.Math.min;
  * @author Liu Binghong
  * @since 1.0
  */
+@Slf4j
 public class Node {
     /**
      * The name of the node.
@@ -297,14 +299,16 @@ public class Node {
      * @return The calculated quota for the node.
      */
     public double getCalculateQuota(QuotaConfig quotaConfig) {
-        if (this.name.equalsIgnoreCase("idle")) return 1000.0;
         if (quotaConfig.getQuotaMode().equalsIgnoreCase("disabled")) return getRealQuota();
         SingleQuotaOfOffset other = new SingleQuotaOfOffset(this.name, getRealQuota());
         SingleQuota singleQuota = quotaConfig.getQuotas().stream()
                 .filter(quota -> quota.getProc().equals(this.name))
                 .findAny()
                 .orElse(other);
-        return singleQuota.getQuota() == null ? (Double.parseDouble(singleQuota.getUpBoundary()) + Double.parseDouble(singleQuota.getDownBoundary())) / 2 : Double.parseDouble(singleQuota.getQuota());
+        double v = singleQuota.getQuota() == null ? (Double.parseDouble(singleQuota.getUpBoundary()) + Double.parseDouble(singleQuota.getDownBoundary())) / 2 : Double.parseDouble(singleQuota.getQuota());
+//        log.info("quota of {}: {}", this.getName(), singleQuota.getQuota());
+//        log.info("quota of {}: {} - {}", this.getName(), singleQuota.getDownBoundary(), singleQuota.getUpBoundary());
+        return v;
     }
 
     /**
@@ -314,7 +318,6 @@ public class Node {
      * @return The lower quota value for the node.
      */
     public double getLowerQuota(QuotaConfig quotaConfig) {
-        if (this.name.equalsIgnoreCase("idle")) return 1000.0;
         if (quotaConfig.getQuotaMode().equalsIgnoreCase("disabled")) return getRealQuota();
         SingleQuotaOfOffset other = new SingleQuotaOfOffset(this.name, getRealQuota());
         return Double.parseDouble(quotaConfig.getQuotas().stream()
@@ -331,7 +334,6 @@ public class Node {
      * @return The upper quota value for the node.
      */
     public double getUpperQuota(QuotaConfig quotaConfig) {
-        if (this.name.equalsIgnoreCase("idle")) return 1000.0;
         if (quotaConfig.getQuotaMode().equalsIgnoreCase("disabled")) return getRealQuota();
         SingleQuotaOfOffset other = new SingleQuotaOfOffset(this.name, getRealQuota());
         return Double.parseDouble(quotaConfig.getQuotas().stream()
@@ -348,6 +350,6 @@ public class Node {
      * @return true if the node is handling node, false otherwise.
      */
     public boolean isHandlingNode() {
-        return this.getActions().contains("transfer");
+        return this.getActions().contains("transfer") || this.getActions().isEmpty();
     }
 }

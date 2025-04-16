@@ -78,6 +78,7 @@ public class ImageSenderService {
      * <br> Useful for potential interruption or cancellation of ongoing tasks.
      */
     public final Map<String, List<CompletableFuture<List<AbstractActionObservation>>>> sendingProcesses = new ConcurrentHashMap<>();
+    private final RoboflowService roboflowService;
 
     /**
      * Constructor that injects the config service.
@@ -93,6 +94,7 @@ public class ImageSenderService {
         this.configService = configService;
         this.imageSenderOfRoboflow = new ImageSenderOfRoboflow(roboflowService);
         this.imageSenderOfPython = new ImageSenderOfPython(this, objectMapper, pythonServerRepository);
+        this.roboflowService = roboflowService;
     }
 
     private final ImageSenderOfRoboflow imageSenderOfRoboflow;
@@ -111,6 +113,7 @@ public class ImageSenderService {
      * @param file  the video {@link File} to process
      * @param user  the user identifier (used for tracking progress and for cancellations)
      * @param config additional configuration parameters (e.g., host and port for the recognition service)
+     * @param imageSender the image sender.
      * @return a {@link Map} where each key is the frame timestamp (in ms), and each value is a list of recognition results
      * @throws IOException if the video file cannot be opened or an error occurs in reading frames
      *
@@ -247,5 +250,17 @@ public class ImageSenderService {
     public void interrupt(String user) {
         imageSenderOfRoboflow.interrupt(user);
         imageSenderOfPython.interrupt(user);
+    }
+
+    /**
+     * Test connection of a specific host and port by using Roboflow API.
+     *
+     * @param host host.
+     * @param port port.
+     * @throws ExecutionException throw then test fail.
+     * @throws InterruptedException throw when test is interrupted.
+     */
+    public void testRoboflow(String host, String port) throws ExecutionException, InterruptedException {
+        roboflowService.test(host, port);
     }
 }

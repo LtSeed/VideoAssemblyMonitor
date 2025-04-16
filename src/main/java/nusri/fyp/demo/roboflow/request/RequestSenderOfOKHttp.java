@@ -79,7 +79,7 @@ public class RequestSenderOfOKHttp implements RequestSender {
             } else {
                 request = new Request.Builder()
                         .url(BASE_URI.toURL())
-                        .post(RequestBody.create(Objects.requireNonNull(MediaType.parse("application/json")), new byte[0]))
+                        .post(RequestBody.create(new byte[0], Objects.requireNonNull(MediaType.parse("application/json"))))
                         .build();
             }
 

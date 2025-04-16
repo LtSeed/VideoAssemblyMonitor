@@ -31,7 +31,7 @@ public class RoboflowConfig {
      * @param objectMapper The Jackson {@link ObjectMapper} to be configured.
      * @param configService The configuration service for retrieving the Roboflow settings.
      */
-    RoboflowConfig(ObjectMapper objectMapper, ConfigService configService) {
+    public RoboflowConfig(ObjectMapper objectMapper, ConfigService configService) {
         this.objectMapper = objectMapper;
         SimpleModule module = new SimpleModule();
         module.addDeserializer(AnyData.class, new AnyDataDeserializer());
@@ -47,6 +47,9 @@ public class RoboflowConfig {
      * @return The host and port for Roboflow API.
      */
     public String getHost() {
+        if (configService.getRoboflowPort().equals("443") || configService.getRoboflowPort().equals("80")) {
+            return configService.getRoboflowHost();
+        }
         return configService.getRoboflowHost() + ":" + configService.getRoboflowPort();
     }
 

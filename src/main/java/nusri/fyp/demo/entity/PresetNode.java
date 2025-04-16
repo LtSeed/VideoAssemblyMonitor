@@ -135,9 +135,15 @@ public class PresetNode {
                 .map(n -> PresetNode.getPresetNode(preset, n))
                 .collect(Collectors.toSet());
         this.actions = node.getActions();
-        List<PresetNode> nodes = preset.getNodes();
-        nodes.add(this);
-        preset.setNodes(nodes);
+        if (parents.isEmpty()) {
+            this.rank = -1;
+        } else {
+            this.rank = parents.stream().mapToInt(PresetNode::getRank).max().orElse(-1);
+        }
+
+//        List<PresetNode> nodes = preset.getNodes();
+//        nodes.add(this);
+//        preset.setNodes(nodes);
     }
 
     /**

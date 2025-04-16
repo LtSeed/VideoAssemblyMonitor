@@ -53,7 +53,7 @@ public class StateMachine {
     /**
      * Idle node representing the state when no valid action is available.
      */
-    private final Node handling = new Node(0, 100, "Idle");
+    private final Node handling = new Node(0, 200, "Handling");
 
     /**
      * Timestamp (in seconds) of the last state update.
@@ -309,6 +309,7 @@ public class StateMachine {
      */
     public PresetNode getMostProbableState() {
         Node bestNode = nodes.stream()
+                .filter(node -> node.P() >= 0.01)
                 .max(Comparator.comparingDouble(Node::P))
                 .orElse(handling);
         return PresetNode.getPresetNode(preset, bestNode);

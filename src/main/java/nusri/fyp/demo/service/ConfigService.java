@@ -312,7 +312,7 @@ public class ConfigService implements InitializingBean {
      */
     @Cacheable(value = "presetConfigCache", key = "#presetName")
     public QuotaConfig getQuotaConfig(String presetName) {
-        log.info("preset: {}", presetName);
+        log.debug("preset: {}", presetName);
         if (modelQuotaConfig.containsKey(presetName)) {
             return new QuotaConfig(modelQuotaConfig.get(presetName), objectMapper);
         }
@@ -334,4 +334,20 @@ public class ConfigService implements InitializingBean {
         updateConfig();
     }
 
+    /**
+     * Retrieve all quota configs that has been changed by the frontend.
+     *
+     * @return All quota configs.
+     */
+    public Map<String, QuotaConfig> getAllQuotaConfig() {
+        Map<String, QuotaConfig> quotaConfigs = new HashMap<>();
+        modelQuotaConfig.forEach((presetName, quotaConfig) -> quotaConfigs.put(presetName, new QuotaConfig(quotaConfig, objectMapper)));
+        if (quotaConfigs.containsKey("default")) {
+            return quotaConfigs;
+        }
+        QuotaConfig value = new QuotaConfig();
+        value.setQuotaMode("disabled");
+        quotaConfigs.put("default", value);
+        return quotaConfigs;
+    }
 }

@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.dto.JvmInfoDto;
 import nusri.fyp.demo.dto.SystemInfoDto;
 import nusri.fyp.demo.service.SystemInfoService;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.devtools.restart.Restarter;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,14 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SystemInfoController {
 
     private final SystemInfoService systemInfoService;
+    private final ApplicationContext applicationContext;
 
     /**
      * Constructs a {@link SystemInfoController} with the required {@link SystemInfoService}.
      *
      * @param systemInfoService The service for retrieving system and JVM information.
+     * @param applicationContext The app context to refresh the app.
      */
-    public SystemInfoController(SystemInfoService systemInfoService) {
+    public SystemInfoController(SystemInfoService systemInfoService, ApplicationContext applicationContext) {
         this.systemInfoService = systemInfoService;
+        this.applicationContext = applicationContext;
     }
 
     /**
@@ -49,5 +55,42 @@ public class SystemInfoController {
     @GetMapping("/jvm-info")
     public JvmInfoDto getJvmInfo() {
         return systemInfoService.getJvmInfo();
+    }
+
+    /**
+     * Endpoint to test connection.
+     *
+     * @return pa
+     */
+    @GetMapping("/ping")
+    public String ping() {
+        return "pa";
+    }
+
+    /**
+     * Endpoint to gracefully shut down the entire Spring Boot application.
+     * NOTE: Use with caution in production; consider securing this endpoint.
+     * @return a sign.
+     */
+    @GetMapping("/shutdown")
+    public String shutdown() {
+        log.warn("Received request to shut down application.");
+        // First exit the Spring context
+        int exitCode = SpringApplication.exit(applicationContext, () -> 0);
+        // Then tell the JVM to halt
+        System.exit(exitCode);
+        return "Shutting down application...";
+    }
+
+    /**
+     * Endpoint to trigger a hot reload (restart) via Spring DevTools.
+     * NOTE: This works only if DevTools are on the classpath and is typically used in development.
+     * @return a sign.
+     */
+    @GetMapping("/hot-reload")
+    public String hotReload() {
+        log.warn("Received request to hot reload application.");
+        Restarter.getInstance().restart();
+        return "Application is restarting (DevTools) ...";
     }
 }

@@ -3,6 +3,7 @@ package nusri.fyp.demo.dto;
 import lombok.Getter;
 import lombok.Setter;
 import nusri.fyp.demo.entity.Preset;
+import nusri.fyp.demo.entity.QuotaConfig;
 
 import java.util.List;
 
@@ -33,11 +34,12 @@ public class PresetDto {
      * Constructs a DTO from the {@link nusri.fyp.demo.entity.Preset} entity.
      *
      * @param preset The preset entity.
+     * @param quotaConfig The quota config.
      */
-    public PresetDto(Preset preset) {
+    public PresetDto(Preset preset, QuotaConfig quotaConfig) {
         this.id = preset.getId();
         this.name = preset.getName();
-        this.nodes = preset.getNodes().stream().map(PresetNodeDto::new).toList();
+        this.nodes = preset.getNodes().stream().map(o-> new PresetNodeDto(o, quotaConfig)).toList();
     }
 
     /**

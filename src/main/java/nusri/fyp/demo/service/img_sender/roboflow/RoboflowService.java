@@ -1,6 +1,5 @@
 package nusri.fyp.demo.service.img_sender.roboflow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import nusri.fyp.demo.roboflow.data.entity.workflow.dto.WorkflowInferenceResponseDTO;
 import nusri.fyp.demo.entity.ActionWithId;
@@ -17,7 +16,6 @@ import nusri.fyp.demo.roboflow.data.request.PredefinedWorkflowDescribeInterfaceR
 import nusri.fyp.demo.roboflow.data.request.PredefinedWorkflowInferenceRequest;
 import nusri.fyp.demo.roboflow.data.response.*;
 import nusri.fyp.demo.roboflow.request.RequestSenderOfOKHttp;
-import nusri.fyp.demo.roboflow.request.RoboflowRequest;
 import nusri.fyp.demo.state_machine.AbstractActionObservation;
 import org.springframework.stereotype.Service;
 
@@ -78,15 +76,13 @@ public class RoboflowService {
      * @param objectRepository The repository used for mapping object IDs to their names
      * @param actionRepository The repository used for mapping action IDs to their names
      * @param roboflowConfig The configuration containing API credentials and settings for Roboflow
-     * @param objectMapper The object mapper (not currently stored, but used during initialization)
      * @see RoboflowConfig
      * @see RequestSenderOfOKHttp
      */
     RoboflowService(RequestSenderOfOKHttp requestSenderOfOKHttp,
                     ObjectRepository objectRepository,
                     ActionRepository actionRepository,
-                    RoboflowConfig roboflowConfig,
-                    ObjectMapper objectMapper) {
+                    RoboflowConfig roboflowConfig) {
         this.requestSenderOfOKHttp = requestSenderOfOKHttp;
         this.objectRepository = objectRepository;
         this.actionRepository = actionRepository;
@@ -348,7 +344,7 @@ public class RoboflowService {
         InferenceRequestImage image = new InferenceRequestImage();
         image.setType("base64");
         image.setValue(base64);
-        log.info("test image size: {}", base64.length());
+        log.debug("test image size: {}", base64.length());
         image.setPath("test2.png");
         image.setPrefix("data:image/png;base64,");
         image.setNewDimensions(new InferenceImageDimensions(2048, 1114));
@@ -399,8 +395,6 @@ public class RoboflowService {
     private Map<String, String> buildWorkflowPathMap(String workspace_name, String workflow_name) {
         workflow_name = workflow_name.replace(" ", "-");
         workspace_name = workspace_name.replace(" ", "-");
-        workflow_name = workflow_name.replace("，", "");
-        workspace_name = workspace_name.replace("，", "");
         workflow_name = workflow_name.toLowerCase();
         workspace_name = workspace_name.toLowerCase();
 
@@ -438,5 +432,20 @@ public class RoboflowService {
                 data,
                 roboflowConfig,
                 buildWorkflowPathMap(workspace_name, workflow_name));
+    }
+
+    /**
+     * Test connection of a specific host and port by using Roboflow API.
+     *
+     * @param host host.
+     * @param port port.
+     * @throws ExecutionException throw then test fail.
+     * @throws InterruptedException throw when test is interrupted.
+     */
+    public void test(String host, String port) throws ExecutionException, InterruptedException {
+        Map<String, String> pathValues = new HashMap<>();
+        pathValues.put("host", host);
+        pathValues.put("port", port);
+        WORKFLOW_EXECUTION_ENGINE_VERSIONS.send(requestSenderOfOKHttp, roboflowConfig, pathValues);
     }
 }

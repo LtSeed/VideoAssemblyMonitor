@@ -37,7 +37,7 @@ public class ReviewController {
      */
     @GetMapping("/state-machine-logs")
     public List<StateMachineLogDto> getAllStateMachineLogs() {
-        return reviewService.getAllStateMachineLogs();
+        return reviewService.getAllStateMachineLogs(configService.getAllQuotaConfig());
     }
 
     /**
@@ -55,12 +55,12 @@ public class ReviewController {
         if (smLog == null) {
             return ResponseEntity.notFound().build();
         }
-        TreeMap<Long, PresetNode> timeline = smLog.getTimelineOfProc(configService, log);
+        TreeMap<Long, PresetNode> timeline = reviewService.getTimelineOfProc(smLog);
         TreeMap<Long, PresetNodeDto> filteredDto = new TreeMap<>();
         if (timeline == null) {
             return ResponseEntity.ok(filteredDto);
         }
-        timeline.forEach((key, value) -> filteredDto.put(key, new PresetNodeDto(value)));
+        timeline.forEach((key, value) -> filteredDto.put(key, new PresetNodeDto(value, configService.getQuotaConfig(smLog.getPreset().getName()))));
         return ResponseEntity.ok(filteredDto);
     }
 
@@ -79,7 +79,7 @@ public class ReviewController {
         if (smLog == null) {
             return ResponseEntity.notFound().build();
         }
-        TreeMap<Long, PresetNode> timeline = smLog.getTimelineOfProc(configService, log);
+        TreeMap<Long, PresetNode> timeline = reviewService.getTimelineOfProc(smLog);
         if (timeline == null) {
             return ResponseEntity.ok(new TreeMap<>());
         }
@@ -88,7 +88,7 @@ public class ReviewController {
         if (filtered == null) {
             return ResponseEntity.ok(filteredDto);
         }
-        filtered.forEach((key, value) -> filteredDto.put(key, new PresetNodeDto(value)));
+        filtered.forEach((key, value) -> filteredDto.put(key, new PresetNodeDto(value, configService.getQuotaConfig(smLog.getPreset().getName()))));
         return ResponseEntity.ok(filteredDto);
     }
 

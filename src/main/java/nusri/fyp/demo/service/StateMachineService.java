@@ -87,6 +87,7 @@ public class StateMachineService {
      * @param configService           the service managing various configurations, including {@link QuotaConfig}
      * @param actionRepository        the repository for action entities
      * @param objectRepository        the repository for object entities
+     * @param imageSenderService      the image sender service.
      * @see PresetRepository
      * @see StateMachineLogRepository
      * @see ReviewService
@@ -124,7 +125,7 @@ public class StateMachineService {
         List<Node> nodes = new ArrayList<>(List.copyOf(stateMachineByName.getNodes()));
         nodes.add(stateMachineByName.getHandling());
         return nodes.stream()
-                .filter(node -> !node.isHandlingNode())
+//                .filter(node -> !node.isHandlingNode())
                 .map(o -> new ProgressBar(o, configService, stateMachineByName.getPreset().getName()))
                 .toList();
     }
@@ -189,20 +190,15 @@ public class StateMachineService {
             return new ArrayList<>();
         }
 
-        double pHandlingError = 1, pHandlingTimeout = 1;
 
         for (Node node : nodes) {
             double error = node.E(quotaConfig);
             double timeout = node.D(quotaConfig);
-            boolean isHandlingNode = node.isHandlingNode();
-
-            if (!isHandlingNode) {
-                pHandlingError *= 1 - error;
-                pHandlingTimeout *= 1 - timeout;
+            if (node.isHandlingNode()) {
                 continue;
             }
 
-            if (error != 0) {
+            if (error >= 0.05) {
                 int percentage = (int) Math.round(error * 100);
                 alarms.add(new Alarm(
                         "Error in Node " + node.getId(),
@@ -212,7 +208,7 @@ public class StateMachineService {
                 ));
             }
 
-            if (timeout != 0) {
+            if (timeout >= 0.05) {
                 int percentage = (int) Math.round(timeout * 100);
                 alarms.add(new Alarm(
                         "Timeout in Node " + node.getId(),
@@ -223,23 +219,13 @@ public class StateMachineService {
             }
         }
 
-        pHandlingTimeout = 1 - pHandlingTimeout;
-        pHandlingError = 1 - pHandlingError;
 
-        if (pHandlingError != 0) {
-            alarms.add(new Alarm(
-                    "Error in Handling",
-                    "Handling Node may be done in wrong order.",
-                    (int) Math.round(pHandlingError * 100),
-                    "warning"
-            ));
-        }
-
-        if (pHandlingTimeout != 0) {
+        double d = stateMachineByName.getHandling().D(quotaConfig);
+        if (d != 0) {
             alarms.add(new Alarm(
                     "Timeout in Handling",
                     "Handling Node exceeded time limit.",
-                    (int) Math.round(pHandlingTimeout * 100),
+                    (int) Math.round(d * 100),
                     "warning"
             ));
         }
@@ -356,7 +342,7 @@ public class StateMachineService {
         stateMachineLogRepository.save(stateMachineLog);
 
         // Generate timeline and log
-        TreeMap<Long, PresetNode> realTime = stateMachineLog.getTimelineOfProc(configService, log);
+        TreeMap<Long, PresetNode> realTime = reviewService.getTimelineOfProc(stateMachineLog);
         log.debug("Observations of Proc: {}", realTime.entrySet().stream()
                 .map(o -> o.getKey() + ": " + o.getValue().getId().getNumber() + ' ' + o.getValue().getName())
                 .collect(Collectors.joining("\n")));
@@ -385,7 +371,7 @@ public class StateMachineService {
      * @see PresetDto
      */
     public List<PresetDto> getAllPresetObjects() {
-        return presetRepository.findAll().stream().map(PresetDto::new).toList();
+        return presetRepository.findAll().stream().map(o->new PresetDto(o, configService.getQuotaConfig(o.getName()))).toList();
     }
 
     /**

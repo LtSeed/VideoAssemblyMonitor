@@ -61,6 +61,19 @@ public class SingleQuotaOfOffset implements SingleQuota {
         this.upBoundary = String.valueOf(1.6 * quota);
     }
 
+    /**
+     * Returns the baseline quota value, which is the average.
+     *
+     * @return The baseline quota value.
+     */
+    @Override
+    public String getQuota() {
+        if (quota == null || quota.isEmpty() || Double.parseDouble(quota) < 0.01) {
+            return String.valueOf((Double.parseDouble(upBoundary) + Double.parseDouble(downBoundary)) / 2);
+        }
+        return quota;
+    }
+
     @Override
     public void setQuota(double v) {
         quota = String.valueOf(v);

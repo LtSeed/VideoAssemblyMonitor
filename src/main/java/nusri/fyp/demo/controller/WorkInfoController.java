@@ -5,10 +5,9 @@ import nusri.fyp.demo.dto.Alarm;
 import nusri.fyp.demo.dto.PresetDto;
 import nusri.fyp.demo.dto.ProgressBar;
 import nusri.fyp.demo.roboflow.data.entity.workflow.SinglePrediction;
-import nusri.fyp.demo.service.ConfigService;
-import nusri.fyp.demo.service.VideoService;
 import nusri.fyp.demo.service.StateMachineService;
 import nusri.fyp.demo.service.img_sender.ImageSenderService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -119,6 +118,23 @@ public class WorkInfoController {
     @GetMapping("/all-preset-obj")
     public ResponseEntity<List<PresetDto>> getAllPresetObjects() {
         return ResponseEntity.ok(stateMachineService.getAllPresetObjects());
+    }
+
+    /**
+     * Test Roboflow server connection (host and port).
+     *
+     * @param request The request body containing host and port values.
+     * @return "pa" if connect success.
+     */
+    @PostMapping("/ping-rf")
+    public ResponseEntity<?> pingRoboflow(@RequestBody ConfigController.HostAndPort request) {
+        try {
+            imageSenderService.testRoboflow(request.getHost(), request.getPort());
+            return ResponseEntity.ok("pa");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("fail: " + e.getMessage());
+        }
     }
 
     /**

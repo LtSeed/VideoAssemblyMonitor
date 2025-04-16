@@ -64,6 +64,7 @@ public class VideoService {
      * @param configService                the configuration service for retrieving file paths and model info
      * @param stateMachineService          the service for managing state machines
      * @param roboflowWorkflowRepository   the repository for Roboflow workflow data
+     * @param imageSenderService           the image sender service.
      * @see ConfigService
      * @see ImageSenderOfPython
      * @see ImageSenderOfRoboflow
@@ -247,6 +248,8 @@ public class VideoService {
         return true;
     }
 
+    private final Map<String, String> wfIdCache = new HashMap<>();
+
     /**
      * Builds a configuration map for the selected model.
      * <br> If the model type is 'python', the host is used.
@@ -264,9 +267,16 @@ public class VideoService {
         } else {
             config.put("workspace_name", split[1]);
             config.put("workflow_name", split[2]);
-            config.put("workflow_id",
-                    roboflowWorkflowRepository.findByWorkspaceNameAndWorkflowName(split[1], split[2])
-                            .getWorkflowId());
+            if (wfIdCache.containsKey(split[1] + split[2])) {
+                config.put("workflow_id",
+                        wfIdCache.get(split[1] + split[2]));
+            } else {
+                String workflowId = roboflowWorkflowRepository.findByWorkspaceNameAndWorkflowName(split[1], split[2])
+                        .getWorkflowId();
+                config.put("workflow_id",
+                        workflowId);
+                wfIdCache.put(split[1] + split[2], workflowId);
+            }
         }
         return config;
     }

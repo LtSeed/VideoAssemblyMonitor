@@ -590,6 +590,9 @@ public enum RoboflowRequest {
      */
     private URI buildUriWithPathVars(String uriTemplate, Map<String, String> pathVar) throws URISyntaxException {
         String resultUri = uriTemplate;
+        if (pathVar.containsKey("host") && pathVar.containsKey("port")) {
+            resultUri = pathVar.get("host") + ':' + pathVar.get("port");
+        }
 
         for (Map.Entry<String, String> entry : pathVar.entrySet()) {
             resultUri = resultUri.replace("{" + entry.getKey() + "}", entry.getValue());
@@ -600,7 +603,7 @@ public enum RoboflowRequest {
             throw new IllegalArgumentException("URI contains unprocessed placeholder: {*}");
         }
 
-        log.info("URI result with path input : {}", resultUri);
+        log.debug("URI result with path input : {}", resultUri);
         return new URI(resultUri);
     }
 

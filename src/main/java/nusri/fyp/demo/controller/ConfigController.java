@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.stream.Collectors;
+
 /**
  * This controller provides endpoints for managing the configuration of the system. <br>
  * It supports functionality for getting and updating the configuration of various services,<br>
@@ -80,23 +82,6 @@ public class ConfigController {
         }
     }
 
-    /**
-     * Updates the Python server configuration (host and port).
-     *
-     * @param request The request body containing host and port values.
-     * @return ResponseEntity indicating the result of the update operation.
-     */
-    @PutMapping("/python")
-    public ResponseEntity<?> updatePythonConfig(@RequestBody hostAndPort request) {
-        try {
-            configService.setPythonServerHost(request.getHost());
-            configService.setPythonServerMainPort(request.getPort());
-            return ResponseEntity.ok("Python 服务器配置更新成功");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                 .body("更新 Python 配置失败: " + e.getMessage());
-        }
-    }
 
     /**
      * Updates the Roboflow server configuration (host and port).
@@ -105,14 +90,14 @@ public class ConfigController {
      * @return ResponseEntity indicating the result of the update operation.
      */
     @PutMapping("/roboflow")
-    public ResponseEntity<?> updateRoboflowConfig(@RequestBody hostAndPort request) {
+    public ResponseEntity<?> updateRoboflowConfig(@RequestBody HostAndPort request) {
         try {
             configService.setRoboflowHost(request.getHost());
             configService.setRoboflowPort(request.getPort());
-            return ResponseEntity.ok("roboflow 服务器配置更新成功");
+            return ResponseEntity.ok("roboflow server config updated");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("更新 roboflow 配置失败: " + e.getMessage());
+                    .body("fail when roboflow config updating: " + e.getMessage());
         }
     }
 
@@ -121,7 +106,7 @@ public class ConfigController {
      */
     @Setter
     @Getter
-    public static class hostAndPort {
+    public static class HostAndPort {
         private String host;
         private String port;
 
@@ -143,8 +128,13 @@ public class ConfigController {
     @PutMapping("/model/preset/{presetName}")
     public ResponseEntity<?> updateUseModelPreset(@PathVariable("presetName") String presetName,
                                                   @RequestBody String modelValue) {
+        modelValue = modelValue.replace("\"", "");
         if (!configService.getAllLegalModel().contains(modelValue)) {
-            return ResponseEntity.badRequest().body("No such model setting");
+            String body = "No such model setting: " + modelValue;
+            log.error(body);
+            log.error(String.join(" ", configService.getAllLegalModel()));
+
+            return ResponseEntity.badRequest().body(body);
         }
         try {
             java.util.Map<String, String> useModel = configService.getUseModel();
@@ -155,10 +145,12 @@ public class ConfigController {
             useModel.put(presetName, modelValue);
 
             configService.setUseModel(useModel);
-            return ResponseEntity.ok("模型 " + presetName + " 更新为 " + modelValue);
+            return ResponseEntity.ok("model " + presetName + " update name to " + modelValue);
         } catch (Exception e) {
+            String body = "fail when updating model: " + e.getMessage();
+            log.error(body, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("更新模型失败: " + e.getMessage());
+                    .body(body);
         }
     }
 
@@ -183,10 +175,10 @@ public class ConfigController {
             java.util.Map<String, String> useModel = new java.util.HashMap<>();
             useModel.put("default", modelValue);
             configService.setUseModel(useModel);
-            return ResponseEntity.ok("模型 default 更新为 " + modelValue);
+            return ResponseEntity.ok("model default changed to " + modelValue);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("更新模型失败: " + e.getMessage());
+                    .body("fail when update default model: " + e.getMessage());
         }
     }
 
@@ -206,7 +198,7 @@ public class ConfigController {
      * <br>Example:
      * <pre>
      *  PUT /config/quota/preset/{presetName}
-     *  Body: "……" (following {@link QuotaConfig} format)
+     *  Body: "..." (following {@link QuotaConfig} format)
      * </pre>
      * <br>This will update the quota configuration for the given preset name.
      *
@@ -219,10 +211,10 @@ public class ConfigController {
                                                      @RequestBody QuotaConfig quotaConfig) {
         try {
             configService.addQuotaConfig(presetName, quotaConfig);
-            return ResponseEntity.ok("模型 " + presetName + " quota 更新为 " + quotaConfig);
+            return ResponseEntity.ok("model " + presetName + " quota update to " + quotaConfig);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("更新模型quota失败: " + e.getMessage());
+                    .body("fail when updating model quota: " + e.getMessage());
         }
     }
 
@@ -231,7 +223,7 @@ public class ConfigController {
      * <br>Example:
      * <pre>
      *  PUT /config/quota/preset-default
-     *  Body: "……" (following {@link QuotaConfig} format)
+     *  Body: "..." (following {@link QuotaConfig} format)
      * </pre>
      * <br>This will update the default quota configuration for all model presets.
      *
@@ -245,10 +237,10 @@ public class ConfigController {
             String serialize = quotaConfig.serialize(objectMapper);
             quotaConfigs.put("default", serialize);
             configService.setModelQuotaConfig(quotaConfigs);
-            return ResponseEntity.ok("模型 default 更新为 " + serialize);
+            return ResponseEntity.ok("model default update to " + serialize);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("更新模型失败: " + e.getMessage());
+                    .body("fail when updating model default: " + e.getMessage());
         }
     }
 

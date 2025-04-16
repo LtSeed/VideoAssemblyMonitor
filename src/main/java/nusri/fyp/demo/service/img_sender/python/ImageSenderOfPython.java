@@ -73,6 +73,7 @@ public class ImageSenderOfPython implements ImageSender {
      * <br>
      * Each record in the repository provides a host/port, and a corresponding {@link PythonServerLoadBalancer} is created.
      *
+     * @param imageSenderService image sender service.
      * @param objectMapper  the Jackson {@link ObjectMapper} for JSON parsing
      * @param pythonServerRepository the repository that holds Python server info (host, port, etc.)
      * @see PythonServerRepository

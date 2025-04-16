@@ -3,6 +3,7 @@ package nusri.fyp.demo.dto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import nusri.fyp.demo.entity.QuotaConfig;
 import nusri.fyp.demo.entity.StateMachineLog;
 
 import java.time.LocalDateTime;
@@ -49,11 +50,12 @@ public class StateMachineLogDto {
      * Constructs a DTO from the {@link nusri.fyp.demo.entity.StateMachineLog} entity.
      *
      * @param stateMachineLog The state machine log entity.
+     * @param quotaConfig The quota config.
      */
-    public StateMachineLogDto(StateMachineLog stateMachineLog) {
+    public StateMachineLogDto(StateMachineLog stateMachineLog, QuotaConfig quotaConfig) {
         this.id = stateMachineLog.getId();
         this.user = stateMachineLog.getUser();
-        this.preset = new PresetDto(stateMachineLog.getPreset());
+        this.preset = new PresetDto(stateMachineLog.getPreset(), quotaConfig);
         this.startTime = stateMachineLog.getStartTime();
         this.endTime = stateMachineLog.getEndTime();
         this.duration = stateMachineLog.getDuration();

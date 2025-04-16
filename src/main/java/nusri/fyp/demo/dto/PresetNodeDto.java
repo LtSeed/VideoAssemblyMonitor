@@ -3,6 +3,7 @@ package nusri.fyp.demo.dto;
 import lombok.Getter;
 import lombok.Setter;
 import nusri.fyp.demo.entity.PresetNode;
+import nusri.fyp.demo.entity.QuotaConfig;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,6 +31,10 @@ public class PresetNodeDto {
      */
     private double realQuota;
 
+    private double upperQuota;
+    private double lowerQuota;
+    private double calculatingQuota;
+
     /**
      * The rank or order of the node (optional).
      */
@@ -49,14 +54,18 @@ public class PresetNodeDto {
      * Constructs a DTO from the {@link nusri.fyp.demo.entity.PresetNode} entity.
      *
      * @param presetNode The preset node entity.
+     * @param quotaConfig The quota config.
      */
-    public PresetNodeDto(PresetNode presetNode) {
+    public PresetNodeDto(PresetNode presetNode, QuotaConfig quotaConfig) {
         this.name = presetNode.getName();
         this.id = new PresetNodeIdDto(presetNode.getId());
         this.realQuota = presetNode.getRealQuota();
         this.rank = presetNode.getRank();
-        this.parents = presetNode.getParents().stream().map(PresetNodeDto::new).collect(Collectors.toSet());
+        this.parents = presetNode.getParents().stream().map(o-> new PresetNodeDto(o, quotaConfig)).collect(Collectors.toSet());
         this.actions = presetNode.getActions();
+        this.upperQuota = presetNode.toNode().getUpperQuota(quotaConfig);
+        this.lowerQuota = presetNode.toNode().getLowerQuota(quotaConfig);
+        this.calculatingQuota = presetNode.toNode().getCalculateQuota(quotaConfig);
     }
 
     /**
